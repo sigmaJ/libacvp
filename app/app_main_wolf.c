@@ -162,15 +162,11 @@ static void print_usage(void)
     printf("password on the key file.\n");
 }
 
-int main(int argc, char **argv)
+ACVP_LOG_LVL wolf_acvp_parseargs(int argc, char **argv)
 {
-    ACVP_RESULT rv;
-    ACVP_CTX *ctx;
-    char ssl_version[10];
     ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
-    char value[] = "same";
-
-    if (argc > 2) {
+    
+     if (argc > 2) {
         print_usage();
         return 1;
     }
@@ -203,13 +199,21 @@ int main(int argc, char **argv)
     argv++;
     argc--;
     }
+    
+    return level;
+}
 
+void wolf_acvp_register(ACVP_CTX** ctxp, char* ssl_version, ACVP_LOG_LVL level)
+{
 #ifdef ACVP_NO_RUNTIME
     fips_selftest_fail = 0;
     fips_mode = 0;
     fips_algtest_init_nofips();
 #endif
 
+    // store result values
+    ACVP_RESULT rv;
+    
 //  EVP_CIPHER_CTX_cleanup(&cipher_ctx);
     setup_session_parameters();
 
@@ -217,11 +221,13 @@ int main(int argc, char **argv)
      * We begin the libacvp usage flow here.
      * First, we create a test session context.
      */
-    rv = acvp_create_test_session(&ctx, &progress, level);
+    rv = acvp_create_test_session(ctxp, &progress, level);
     if (rv != ACVP_SUCCESS) {
         printf("Failed to create ACVP context\n");
         exit(1);
     }
+    
+    ACVP_CTX* ctx = *ctxp;
 
     /*
      * Next we specify the ACVP server address
@@ -338,7 +344,12 @@ int main(int argc, char **argv)
         printf("Failed to register with ACVP server (rv=%d)\n", rv);
         exit(1);
     }
+}
 
+void wolf_acvp_run(ACVP_CTX* ctx)
+{
+    ACVP_RESULT rv;
+    
     /*
      * Now we process the test cases given to us during
      * registration earlier.
@@ -366,6 +377,17 @@ int main(int argc, char **argv)
     acvp_cleanup();
 
     // BN_free(expo); /* needed when passing bignum arg to rsa keygen from app */
+}
+
+int main(int argc, char **argv)
+{
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    char value[] = "same";
+    
+    ACVP_LOG_LVL level = wolf_acvp_parseargs(argc, argv);
+    wolf_acvp_register(&ctx, ssl_version, level);
+    wolf_acvp_run(ctx);
 
     return (0);
 }
@@ -445,87 +467,3 @@ static ACVP_RESULT app_sha_handler(ACVP_TEST_CASE *test_case)
 
     return ACVP_SUCCESS;
 }
-
-#if 0
-static ACVP_RESULT app_sha_handler(ACVP_TEST_CASE *test_case)
-{
-    ACVP_HASH_TC    *tc;
-    const WOLFSSL_EVP_MD    *md;
-    WOLFSSL_EVP_MD_CTX          md_ctx;
-
-    if (!test_case) {
-        return ACVP_INVALID_ARG;
-    }
-
-    tc = test_case->tc.hash;
-
-    switch (tc->cipher) {
-    case ACVP_SHA1:
-  md = wolfSSL_EVP_sha1();
-  break;
-    case ACVP_SHA224:
-  md = wolfSSL_EVP_sha224();
-  break;
-    case ACVP_SHA256:
-  md = wolfSSL_EVP_sha256();
-  break;
-    case ACVP_SHA384:
-  md = wolfSSL_EVP_sha384();
-  break;
-    case ACVP_SHA512:
-  md = wolfSSL_EVP_sha512();
-  break;
-    default:
-  printf("Error: Unsupported hash algorithm requested by ACVP server\n");
-  return ACVP_NO_CAP;
-  break;
-    }
-
-    WOLFSSL_EVP_MD_CTX_init(&md_ctx);
-
-    /* If Monte Carlo we need to be able to init and then update
-     * one thousand times before we complete each iteration.
-     */
-    if (tc->test_type == ACVP_HASH_TEST_TYPE_MCT) {
-
-        if (!wolfSSL_EVP_DigestInit_ex(&md_ctx, md, NULL)) {
-            printf("\nCrypto module error, EVP_DigestInit_ex failed\n");
-      return ACVP_CRYPTO_MODULE_FAIL;
-        }
-        if (!wolfSSL_EVP_DigestUpdate(&md_ctx, tc->m1, tc->msg_len)) {
-      printf("\nCrypto module error, EVP_DigestUpdate failed\n");
-      return ACVP_CRYPTO_MODULE_FAIL;
-        }
-  if (!wolfSSL_EVP_DigestUpdate(&md_ctx, tc->m2, tc->msg_len)) {
-      printf("\nCrypto module error, EVP_DigestUpdate failed\n");
-      return ACVP_CRYPTO_MODULE_FAIL;
-        }
-  if (!wolfSSL_EVP_DigestUpdate(&md_ctx, tc->m3, tc->msg_len)) {
-      printf("\nCrypto module error, EVP_DigestUpdate failed\n");
-      return ACVP_CRYPTO_MODULE_FAIL;
-        }
-  if (!wolfSSL_EVP_DigestFinal(&md_ctx, tc->md, &tc->md_len)) {
-      printf("\nCrypto module error, EVP_DigestFinal failed\n");
-      return ACVP_CRYPTO_MODULE_FAIL;
-        }
-
-   } else {
-        if (!wolfSSL_EVP_DigestInit_ex(&md_ctx, md, NULL)) {
-            printf("\nCrypto module error, EVP_DigestInit_ex failed\n");
-      return ACVP_CRYPTO_MODULE_FAIL;
-        }
-
-  if (!wolfSSL_EVP_DigestUpdate(&md_ctx, tc->msg, tc->msg_len)) {
-      printf("\nCrypto module error, EVP_DigestUpdate failed\n");
-      return ACVP_CRYPTO_MODULE_FAIL;
-        }
-  if (!wolfSSL_EVP_DigestFinal(&md_ctx, tc->md, &tc->md_len)) {
-      printf("\nCrypto module error, EVP_DigestFinal failed\n");
-      return ACVP_CRYPTO_MODULE_FAIL;
-        }
-  wolfSSL_EVP_MD_CTX_cleanup(&md_ctx);
-   }
-
-    return ACVP_SUCCESS;
-}
-#endif
