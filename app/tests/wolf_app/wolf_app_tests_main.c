@@ -11,7 +11,7 @@
 
 #include "acvp.h"
 #include "app/app_main_wolf.h"
-
+#include "app/tests/wolf_app/wolf_app_tests_main.h"
 
 ACVP_RESULT __wrap_acvp_create_test_session(ACVP_CTX** ctxp, ACVP_RESULT (*progress)(char *), ACVP_LOG_LVL level) {
     return mock_type(ACVP_RESULT);
@@ -49,7 +49,7 @@ ACVP_RESULT __wrap_acvp_register(ACVP_CTX* ctx) {
     return mock_type(ACVP_RESULT);
 }
 
-static void test_fail_create_test_session(void** state) {
+void test_fail_create_test_session(void** state) {
     will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS + 1);
     
     ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
@@ -58,15 +58,29 @@ static void test_fail_create_test_session(void** state) {
     
     ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
     assert_int_not_equal(rv, ACVP_SUCCESS);
-    
 }
 
-int main() {
+void test_fail_set_server(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS + 1);
     
-    const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_fail_create_test_session)
-    };
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
 
-    return cmocka_run_group_tests(tests, NULL, NULL);
-
+void test_fail_set_vendor_info(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS + 1);
+    
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
 }
