@@ -15,10 +15,6 @@
 
 #include <wolfssl/wolfcrypt/sha256.h>
 
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/rand.h>
-
 
 void test_sha256_hash_mct(void** state){
     ACVP_HASH_TC *hash_tc = malloc(sizeof(ACVP_HASH_TC));
@@ -36,6 +32,15 @@ void test_sha256_hash_mct(void** state){
     ACVP_TEST_CASE *tc = malloc(sizeof(ACVP_TEST_CASE));
     tc->tc.hash = hash_tc;
     assert_int_equal(app_sha_handler(tc), ACVP_SUCCESS);
+    
+    char* expected = "7476E5CD17621C7856FE38305E954AC3F9D3090497957DCAB969735DD89D1F56";
+    char* pos = expected;
+    char bytes[32];
+    for(int i = 0; i < SHA256_DIGEST_SIZE; i++) {
+        sscanf(pos, "%2hhx", &bytes[i]);
+        pos += 2;
+    }
+    assert_memory_equal(bytes, hash_tc->md, SHA256_DIGEST_SIZE);    
     
 } 
 
@@ -55,6 +60,16 @@ void test_sha256_hash_kat(void** state){
     ACVP_TEST_CASE *tc = malloc(sizeof(ACVP_TEST_CASE));
     tc->tc.hash = hash_tc;
     assert_int_equal(app_sha_handler(tc), ACVP_SUCCESS);
+    
+    char* expected = "AB530A13E45914982B79F9B7E3FBA994CFD1F3FB22F71CEA1AFBF02B460C6D1D";
+    char* pos = expected;
+    char bytes[32];
+    for(int i = 0; i < SHA256_DIGEST_SIZE; i++) {
+        sscanf(pos, "%2hhx", &bytes[i]);
+        pos += 2;
+    }
+    assert_memory_equal(bytes, hash_tc->md, SHA256_DIGEST_SIZE);
+    
 }
 
 
