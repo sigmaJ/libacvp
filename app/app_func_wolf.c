@@ -352,16 +352,7 @@ ACVP_RESULT app_sha_handler(ACVP_TEST_CASE *test_case)
         }
     }
     
-    printf("Message len: %u\n", tc->msg_len);
-    tc->md_len = 256 / 8;
-    printf("Digest size: %zu\n", sizeof(tc->md));
-    int i;
-    for (i = 0; i < 32; i++)
-    {
-        if (i > 0) printf(":");
-        printf("%02X", tc->md[i]);
-    }
-    printf("\n");
+    tc->md_len = SHA256_DIGEST_SIZE;
 
     wc_Sha256Free(&sha);
 
