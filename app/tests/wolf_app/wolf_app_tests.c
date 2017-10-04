@@ -18,7 +18,14 @@ int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_fail_create_test_session),
         cmocka_unit_test(test_fail_set_server),
-        cmocka_unit_test(test_fail_set_vendor_info)
+        cmocka_unit_test(test_fail_set_vendor_info),
+        cmocka_unit_test(test_fail_set_module_info),
+        cmocka_unit_test(test_fail_set_path_segment),
+        cmocka_unit_test(test_fail_set_cacerts),
+        cmocka_unit_test(test_fail_set_certkey),
+        cmocka_unit_test(test_fail_enable_hash_cap),
+        cmocka_unit_test(test_fail_register),
+        cmocka_unit_test(test_succeed_main_flow)
     };
     
     return cmocka_run_group_tests(tests, NULL, NULL);

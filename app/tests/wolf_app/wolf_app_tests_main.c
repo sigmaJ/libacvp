@@ -84,3 +84,126 @@ void test_fail_set_vendor_info(void** state) {
     ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
     assert_int_not_equal(rv, ACVP_SUCCESS);
 }
+
+void test_fail_set_module_info(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_module_info, ACVP_SUCCESS + 1);
+    
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+
+void test_fail_set_path_segment(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_module_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_path_segment, ACVP_SUCCESS + 1);
+    
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+
+void test_fail_set_cacerts(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_module_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_path_segment, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_cacerts, ACVP_SUCCESS + 1);
+    
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+
+void test_fail_set_certkey(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_module_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_path_segment, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_cacerts, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_certkey, ACVP_SUCCESS + 1);
+    
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+
+void test_fail_enable_hash_cap(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_module_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_path_segment, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_cacerts, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_certkey, ACVP_SUCCESS);
+    will_return(__wrap_acvp_enable_hash_cap, ACVP_SUCCESS + 1);
+    
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+
+void test_fail_register(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_module_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_path_segment, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_cacerts, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_certkey, ACVP_SUCCESS);
+    will_return(__wrap_acvp_enable_hash_cap, ACVP_SUCCESS);
+    will_return(__wrap_acvp_register, ACVP_SUCCESS + 1);
+    
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+void test_succeed_main_flow(void** state) {
+    will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_module_info, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_path_segment, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_cacerts, ACVP_SUCCESS);
+    will_return(__wrap_acvp_set_certkey, ACVP_SUCCESS);
+    will_return(__wrap_acvp_enable_hash_cap, ACVP_SUCCESS);
+    will_return(__wrap_acvp_register, ACVP_SUCCESS);
+    
+    ACVP_LOG_LVL level = ACVP_LOG_LVL_STATUS;
+    ACVP_CTX *ctx;
+    char ssl_version[10];
+    
+    ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_equal(rv, ACVP_SUCCESS);
+}
