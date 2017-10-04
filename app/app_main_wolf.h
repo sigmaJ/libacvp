@@ -52,7 +52,7 @@ char *path_segment;
 #define CHECK_ENABLE_CAP_RV(rv) \
     if (rv != ACVP_SUCCESS) { \
         printf("Failed to register capability with libacvp (rv=%d)\n", rv); \
-        exit(1); \
+        return rv; \
     }
 
 
