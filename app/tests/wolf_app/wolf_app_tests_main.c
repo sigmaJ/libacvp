@@ -49,6 +49,23 @@ ACVP_RESULT __wrap_acvp_register(ACVP_CTX* ctx) {
     return mock_type(ACVP_RESULT);
 }
 
+ACVP_RESULT __wrap_acvp_process_tests(ACVP_CTX** ctx) {
+    return mock_type(ACVP_RESULT);
+}
+
+ACVP_RESULT __wrap_acvp_check_test_results(ACVP_CTX** ctx) {
+    return mock_type(ACVP_RESULT);
+}
+
+ACVP_RESULT __wrap_acvp_free_test_session(ACVP_CTX** ctx) {
+    return mock_type(ACVP_RESULT);
+}
+
+void __wrap_acvp_cleanup() {
+    // Does nothing
+}
+
+
 void test_fail_create_test_session(void** state) {
     will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS + 1);
     
@@ -189,7 +206,7 @@ void test_fail_register(void** state) {
     assert_int_not_equal(rv, ACVP_SUCCESS);
 }
 
-void test_succeed_main_flow(void** state) {
+void test_succeed_main_registration_flow(void** state) {
     will_return(__wrap_acvp_create_test_session, ACVP_SUCCESS);
     will_return(__wrap_acvp_set_server, ACVP_SUCCESS);
     will_return(__wrap_acvp_set_vendor_info, ACVP_SUCCESS);
@@ -205,5 +222,47 @@ void test_succeed_main_flow(void** state) {
     char ssl_version[10];
     
     ACVP_RESULT rv = wolf_acvp_register(&ctx, ssl_version, level);
+    assert_int_equal(rv, ACVP_SUCCESS);
+}
+
+void test_fail_process_tests(void** state) {
+    will_return(__wrap_acvp_process_tests, ACVP_SUCCESS + 1);
+    
+    ACVP_CTX *ctx;
+    
+    ACVP_RESULT rv = wolf_acvp_run(&ctx);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+void test_fail_check_test_results(void** state) {
+    will_return(__wrap_acvp_process_tests, ACVP_SUCCESS);
+    will_return(__wrap_acvp_check_test_results, ACVP_SUCCESS + 1);
+    
+    ACVP_CTX *ctx;
+    
+    ACVP_RESULT rv = wolf_acvp_run(&ctx);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+void test_fail_free_test_session(void** state) {
+    will_return(__wrap_acvp_process_tests, ACVP_SUCCESS);
+    will_return(__wrap_acvp_check_test_results, ACVP_SUCCESS);
+    will_return(__wrap_acvp_free_test_session, ACVP_SUCCESS + 1);
+    
+    ACVP_CTX *ctx;
+    
+    ACVP_RESULT rv = wolf_acvp_run(&ctx);
+    assert_int_not_equal(rv, ACVP_SUCCESS);
+}
+
+
+void test_succeed_main_run_flow(void** state) {
+    will_return(__wrap_acvp_process_tests, ACVP_SUCCESS);
+    will_return(__wrap_acvp_check_test_results, ACVP_SUCCESS);
+    will_return(__wrap_acvp_free_test_session, ACVP_SUCCESS);
+    
+    ACVP_CTX *ctx;
+    
+    ACVP_RESULT rv = wolf_acvp_run(&ctx);
     assert_int_equal(rv, ACVP_SUCCESS);
 }

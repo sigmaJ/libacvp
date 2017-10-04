@@ -25,11 +25,14 @@ int main() {
         cmocka_unit_test(test_fail_set_certkey),
         cmocka_unit_test(test_fail_enable_hash_cap),
         cmocka_unit_test(test_fail_register),
-        cmocka_unit_test(test_succeed_main_flow),
+        cmocka_unit_test(test_succeed_main_registration_flow),        
+        cmocka_unit_test(test_fail_process_tests),
+        cmocka_unit_test(test_fail_check_test_results),
+        cmocka_unit_test(test_fail_free_test_session),
+        cmocka_unit_test(test_succeed_main_run_flow),
         cmocka_unit_test(test_sha256_hash_mct),
         cmocka_unit_test(test_sha256_hash_kat)
     };
-    
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
  
