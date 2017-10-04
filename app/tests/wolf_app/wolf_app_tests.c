@@ -18,7 +18,9 @@ int main() {
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(test_fail_create_test_session),
         cmocka_unit_test(test_fail_set_server),
-        cmocka_unit_test(test_fail_set_vendor_info)
+        cmocka_unit_test(test_fail_set_vendor_info),
+        cmocka_unit_test(test_sha256_hash_mct),
+        cmocka_unit_test(test_sha256_hash_kat)
     };
     
     return cmocka_run_group_tests(tests, NULL, NULL);
