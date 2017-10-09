@@ -71,6 +71,11 @@ void print_usage(void)
     printf("password on the key file.\n");
 }
 
+/**
+ * Parses command line arguments, which at this point are just logging levels
+ * The six levels are info, status, warn, error, none, and verbose
+ * Also detects the -help parameter, which prints usage instructions
+ */
 ACVP_RESULT wolf_acvp_parseargs(int argc, char **argv, ACVP_LOG_LVL* level)
 {
     *level = ACVP_LOG_LVL_STATUS;
@@ -112,6 +117,10 @@ ACVP_RESULT wolf_acvp_parseargs(int argc, char **argv, ACVP_LOG_LVL* level)
     return ACVP_SUCCESS;
 }
 
+/**
+ * Registers the client session with the ACVP server
+ * TODO: Several of these need to be updated to reflect the module under test
+ */
 ACVP_RESULT wolf_acvp_register(ACVP_CTX** ctxp, char* ssl_version, ACVP_LOG_LVL level)
 {
 #ifdef ACVP_NO_RUNTIME
@@ -202,46 +211,45 @@ ACVP_RESULT wolf_acvp_register(ACVP_CTX** ctxp, char* ssl_version, ACVP_LOG_LVL 
      * validated.
      */
 
-   /*
-    * Enable SHA-1 and SHA-2
-    */
-/*
-   rv = acvp_enable_hash_cap(ctx, ACVP_SHA1, &app_sha_handler);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA1, ACVP_HASH_IN_BIT, 0);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA1, ACVP_HASH_IN_EMPTY, 1);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap(ctx, ACVP_SHA224, &app_sha_handler);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA224, ACVP_HASH_IN_BIT, 0);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA224, ACVP_HASH_IN_EMPTY, 1);
-   CHECK_ENABLE_CAP_RV(rv);
+    /*
+     * Enable SHA-1 and SHA-2
+     */
+    /*
+    rv = acvp_enable_hash_cap(ctx, ACVP_SHA1, &app_sha_handler);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA1, ACVP_HASH_IN_BIT, 0);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA1, ACVP_HASH_IN_EMPTY, 1);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap(ctx, ACVP_SHA224, &app_sha_handler);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA224, ACVP_HASH_IN_BIT, 0);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA224, ACVP_HASH_IN_EMPTY, 1);
+    CHECK_ENABLE_CAP_RV(rv);
+     */
+    rv = acvp_enable_hash_cap(ctx, ACVP_SHA256, &app_sha_handler);
+    CHECK_ENABLE_CAP_RV(rv);
+    /*
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA256, ACVP_HASH_IN_BIT, 0);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA256, ACVP_HASH_IN_EMPTY, 1);
+    CHECK_ENABLE_CAP_RV(rv);
 
-*/
-   rv = acvp_enable_hash_cap(ctx, ACVP_SHA256, &app_sha_handler);
-   CHECK_ENABLE_CAP_RV(rv);
-/*
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA256, ACVP_HASH_IN_BIT, 0);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA256, ACVP_HASH_IN_EMPTY, 1);
-   CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap(ctx, ACVP_SHA384, &app_sha_handler);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA384, ACVP_HASH_IN_BIT, 0);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA384, ACVP_HASH_IN_EMPTY, 1);
+    CHECK_ENABLE_CAP_RV(rv);
 
-   rv = acvp_enable_hash_cap(ctx, ACVP_SHA384, &app_sha_handler);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA384, ACVP_HASH_IN_BIT, 0);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA384, ACVP_HASH_IN_EMPTY, 1);
-   CHECK_ENABLE_CAP_RV(rv);
-
-   rv = acvp_enable_hash_cap(ctx, ACVP_SHA512, &app_sha_handler);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA512, ACVP_HASH_IN_BIT, 0);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA512, ACVP_HASH_IN_EMPTY, 1);
-   CHECK_ENABLE_CAP_RV(rv);
-*/
+    rv = acvp_enable_hash_cap(ctx, ACVP_SHA512, &app_sha_handler);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA512, ACVP_HASH_IN_BIT, 0);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_hash_cap_parm(ctx, ACVP_SHA512, ACVP_HASH_IN_EMPTY, 1);
+    CHECK_ENABLE_CAP_RV(rv);
+     */
 
     /*
      * Now that we have a test session, we register with
@@ -257,6 +265,10 @@ ACVP_RESULT wolf_acvp_register(ACVP_CTX** ctxp, char* ssl_version, ACVP_LOG_LVL 
     return ACVP_SUCCESS;
 }
 
+/*
+ * Retrieves, processes, and responds to the server's test vectors, 
+ * then retrieves the session results from the server.
+ */
 ACVP_RESULT wolf_acvp_run(ACVP_CTX* ctx)
 {
     ACVP_RESULT rv;
@@ -292,6 +304,10 @@ ACVP_RESULT wolf_acvp_run(ACVP_CTX* ctx)
     return ACVP_SUCCESS;
 }
 
+/**
+ * SHA test handler.
+ * Currently only supports SHA256.  Other sizes are easily supportable.
+ */
 ACVP_RESULT app_sha_handler(ACVP_TEST_CASE *test_case)
 {
     ACVP_HASH_TC    *tc;

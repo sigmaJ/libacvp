@@ -41,16 +41,21 @@ int main(int argc, char **argv)
     char ssl_version[10];
     char value[] = "same";
     
+    //Location of errors will be reported prior to the return of any of these 3 functions
+    
+    //Parses command line arguments
     rv = wolf_acvp_parseargs(argc, argv, &level);
     if (rv != ACVP_SUCCESS) {
         exit(1);
     }
     
+    //Prepares registration information and registers with the ACVP server
     rv = wolf_acvp_register(&ctx, ssl_version, level);
     if (rv != ACVP_SUCCESS) {
         exit(1);
     }
     
+    //Processes tests, sends output to server, and retrieves test results from server
     rv = wolf_acvp_run(ctx);
     if (rv != ACVP_SUCCESS) {
         exit(1);
