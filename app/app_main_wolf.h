@@ -1,3 +1,6 @@
+#ifndef APP_MAIN_WOLF_H
+#define APP_MAIN_WOLF_H
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -65,3 +68,5 @@ ACVP_RESULT wolf_acvp_register(ACVP_CTX** ctxp, char* ssl_version, ACVP_LOG_LVL 
 ACVP_RESULT wolf_acvp_run(ACVP_CTX* ctx);
 
 ACVP_RESULT app_sha_handler(ACVP_TEST_CASE *test_case);
+
+#endif
