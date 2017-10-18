@@ -68,16 +68,11 @@ static unsigned int initialized = 0;
  */
 static int Curl_ossl_init(void)
 {
-    ENGINE_load_builtin_engines();
-
-    /* Lets get nice error messages */
-    SSL_load_error_strings();
-
     /* Init the global ciphers and digests */
-    if (!SSLeay_add_ssl_algorithms())
+    if (!wolfSSL_library_init())
         return 0;
 
-    OpenSSL_add_all_algorithms();
+    wolfSSL_add_all_algorithms();
 
     return 1;
 }
