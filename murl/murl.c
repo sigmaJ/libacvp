@@ -266,6 +266,8 @@ CURLcode curl_easy_setopt(CURL *curl, CURLoption tag, ...)
     return result;
 }
 
+#if 0
+
 /*
  * This function simply opens a TCP connection using
  * the BIO interface. Returns the file descriptor for
@@ -351,6 +353,8 @@ static BIO *create_connection_v6(char *address, int port)
 
     return(conn);
 }
+
+#endif
 
 /*
  * Parse URL and fill in the relevant members of the connection struct.
@@ -762,25 +766,21 @@ CURLcode curl_easy_perform(CURL *curl)
         }
     }
 
-    /*
-     * Open TCP connection with server
-     */
-    if (ctx->use_ipv6) {
-	conn = create_connection_v6(ctx->host_name, ctx->server_port);
-    } else {
-	conn = create_connection(ctx->host_name, ctx->server_port);
-    }
-    //FIXME: do we need to free conn, or is this handled by SSL_free?
-    if (conn == NULL) {
-        fprintf(stderr, "Unable to open socket with server.\n");
-        crv = CURLE_COULDNT_CONNECT;
-	goto easy_perform_cleanup;
-    }
+    //wolfssl converted
+    
     ssl = SSL_new(ssl_ctx);
     if (!SSL_set_tlsext_host_name(ssl, ctx->host_name)) {
         fprintf(stderr, "Warning: SNI extension not set.\n");
     }
-    SSL_set_bio(ssl, conn, conn);
+    
+    SOCKET_T sockfd = 0;
+    
+    tcp_connect(&sockfd, ctx->host_name, ctx->server_port, 0, 0, ssl);
+
+    SSL_set_fd(ssl, sockfd);
+
+    //end wolfssl converted
+    
     rv = SSL_connect(ssl);
     if (rv <= 0) {
         fprintf(stderr, "TLS handshake failed.\n");
