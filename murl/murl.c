@@ -261,6 +261,8 @@ CURLcode curl_easy_setopt(CURL *curl, CURLoption tag, ...)
     return result;
 }
 
+#if 0
+
 /*
  * This function simply opens a TCP connection using
  * the BIO interface. Returns the file descriptor for
@@ -346,6 +348,8 @@ static BIO *create_connection_v6(char *address, int port)
 
     return(conn);
 }
+
+#endif
 
 /*
  * Parse URL and fill in the relevant members of the connection struct.
@@ -757,25 +761,21 @@ CURLcode curl_easy_perform(CURL *curl)
         }
     }
 
-    /*
-     * Open TCP connection with server
-     */
-    if (ctx->use_ipv6) {
-	conn = create_connection_v6(ctx->host_name, ctx->server_port);
-    } else {
-	conn = create_connection(ctx->host_name, ctx->server_port);
-    }
-    //FIXME: do we need to free conn, or is this handled by SSL_free?
-    if (conn == NULL) {
-        fprintf(stderr, "Unable to open socket with server.\n");
-        crv = CURLE_COULDNT_CONNECT;
-	goto easy_perform_cleanup;
-    }
+    //wolfssl converted
+    
     ssl = SSL_new(ssl_ctx);
     if (!SSL_set_tlsext_host_name(ssl, ctx->host_name)) {
         fprintf(stderr, "Warning: SNI extension not set.\n");
     }
-    SSL_set_bio(ssl, conn, conn);
+    
+    SOCKET_T sockfd = 0;
+    
+    tcp_connect(&sockfd, ctx->host_name, ctx->server_port, 0, 0, ssl);
+
+    SSL_set_fd(ssl, sockfd);
+
+    //end wolfssl converted
+    
     rv = SSL_connect(ssl);
     if (rv <= 0) {
         fprintf(stderr, "TLS handshake failed.\n");
@@ -826,8 +826,8 @@ CURLcode curl_easy_perform(CURL *curl)
     /*
      * Send the HTTP request
      */
-    SSL_write(ssl, rbuf, strlen(rbuf));
-    SSL_write(ssl, ctx->post_fields, cl);
+    wolfSSL_write(ssl, rbuf, strlen(rbuf));
+    wolfSSL_write(ssl, ctx->post_fields, cl);
 
     ERR_clear_error();
     free(rbuf);
@@ -852,18 +852,18 @@ CURLcode curl_easy_perform(CURL *curl)
 	/*
 	 * Read the next chunk from the server
 	 */
-        rv = SSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
+        rv = wolfSSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
         if (rv <= 0) {
             ssl_err = SSL_get_error(ssl, rv);
             switch (ssl_err) {
             case SSL_ERROR_NONE:
             case SSL_ERROR_ZERO_RETURN:
-                //fprintf(stderr, "SSL_read finished\n");
+                //fprintf(stderr, "wolfSSL_read finished\n");
                 break;
             default:
                 ossl_err = ERR_get_error();
                 if ((rv < 0) || ossl_err) {
-                    fprintf(stderr, "SSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
+                    fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
                             rv, ssl_err, (int)ossl_err);
                     ERR_print_errors_fp(stderr);
                     crv = CURLE_USE_SSL_FAILED;
