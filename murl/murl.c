@@ -831,8 +831,8 @@ CURLcode curl_easy_perform(CURL *curl)
     /*
      * Send the HTTP request
      */
-    SSL_write(ssl, rbuf, strlen(rbuf));
-    SSL_write(ssl, ctx->post_fields, cl);
+    wolfSSL_write(ssl, rbuf, strlen(rbuf));
+    wolfSSL_write(ssl, ctx->post_fields, cl);
 
     ERR_clear_error();
     free(rbuf);
@@ -857,18 +857,18 @@ CURLcode curl_easy_perform(CURL *curl)
 	/*
 	 * Read the next chunk from the server
 	 */
-        rv = SSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
+        rv = wolfSSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
         if (rv <= 0) {
             ssl_err = SSL_get_error(ssl, rv);
             switch (ssl_err) {
             case SSL_ERROR_NONE:
             case SSL_ERROR_ZERO_RETURN:
-                //fprintf(stderr, "SSL_read finished\n");
+                //fprintf(stderr, "wolfSSL_read finished\n");
                 break;
             default:
                 ossl_err = ERR_get_error();
                 if ((rv < 0) || ossl_err) {
-                    fprintf(stderr, "SSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
+                    fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
                             rv, ssl_err, (int)ossl_err);
                     ERR_print_errors_fp(stderr);
                     crv = CURLE_USE_SSL_FAILED;
