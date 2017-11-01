@@ -648,7 +648,9 @@ static void murl_log_peer_cert(SSL *ssl)
 #define READ_CHUNK_SZ 16384
 CURLcode curl_easy_perform(CURL *curl)
 {
-    FILE *conn;
+    
+    //wolfssl converted
+    
     int rv;
     int ssl_err;
     int read_cnt = 0;
@@ -656,7 +658,6 @@ CURLcode curl_easy_perform(CURL *curl)
     char tbuf[TBUF_MAX];
     WOLFSSL *ssl = NULL;
     WOLFSSL_CTX *ssl_ctx = NULL;
-    X509_VERIFY_PARAM *vpm = NULL;
     int cl;
     SessionHandle *ctx = (SessionHandle*)curl;
     struct curl_slist *hdrs;
@@ -719,51 +720,44 @@ CURLcode curl_easy_perform(CURL *curl)
      * Enable TLS peer verification if requested and CA certs were provided
      */
     if (ctx->ssl_verify_peer && ctx->ca_file) {
-        if (!SSL_CTX_load_verify_locations(ssl_ctx, ctx->ca_file, NULL)) {
+        if (!wolfSSL_CTX_load_verify_locations(ssl_ctx, ctx->ca_file, NULL)) {
             fprintf(stderr, "Failed to set trust anchors.\n");
-            ERR_print_errors_fp(stderr);
+            //ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CACERT_BADFILE;
             goto easy_perform_cleanup;
         }
-        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+        wolfSSL_CTX_set_verify(ssl_ctx, WOLFSSL_VERIFY_PEER|WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
     }
 
-    vpm = X509_VERIFY_PARAM_new();
-    if (vpm == NULL) {
-        fprintf(stderr, "Unable to allocate a verify parameter structure.\n");
-        ERR_print_errors_fp(stderr);
-        crv = CURLE_SSL_CONNECT_ERROR;
-        goto easy_perform_cleanup;
-    }
 #if 0
     /* TODO: Enable CRL checks */
     X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_CRL_CHECK |
                                 X509_V_FLAG_CRL_CHECK_ALL);
 #endif
-    X509_VERIFY_PARAM_set_depth(vpm, 7);
-    X509_VERIFY_PARAM_set_purpose(vpm, X509_PURPOSE_SSL_SERVER);
+    wolSSL_CTX_set_verify_depth(ssl_ctx, 7)
+    //X509_VERIFY_PARAM_set_purpose(vpm, X509_PURPOSE_SSL_SERVER);
     if (ctx->ssl_verify_hostname) {
-        X509_VERIFY_PARAM_set1_host(vpm, ctx->host_name, strnlen(ctx->host_name, MURL_HOSTNAME_MAX));
+        char *hostname = malloc(MURL_HOSNAME_MAX + 1);
+        strncpy(hostname, ctx->host_name, MURL_HOSTNAME_MAX);
+        hostname[MURL_HOSTNAME_MAX] = '\0';
+        wolfSSL_set_tlsext_host_name(ssl, hostname);
+        //X509_VERIFY_PARAM_set1_host(vpm, ctx->host_name, strnlen(ctx->host_name, MURL_HOSTNAME_MAX));
     }
-    SSL_CTX_set1_param(ssl_ctx, vpm);
-    X509_VERIFY_PARAM_free(vpm);
 
     if (ctx->ssl_cert_file && ctx->ssl_key_file) {
-        if (SSL_CTX_use_certificate_chain_file(ssl_ctx, ctx->ssl_cert_file) != 1) {
+        if (wolfSSL_CTX_use_certificate_chain_file(ssl_ctx, ctx->ssl_cert_file) != 1) {
             fprintf(stderr,"Failed to load client certificate\n");
-            ERR_print_errors_fp(stderr);
+            //ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CERTPROBLEM;
             goto easy_perform_cleanup;
         }
-        if (SSL_CTX_use_PrivateKey_file(ssl_ctx, ctx->ssl_key_file, SSL_FILETYPE_PEM) != 1) {
+        if (wolfSSL_CTX_use_PrivateKey_file(ssl_ctx, ctx->ssl_key_file, WOLFSSL_FILETYPE_PEM) != 1) {
             fprintf(stderr, "Failed to load client private key\n");
-            ERR_print_errors_fp(stderr);
+            //ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CERTPROBLEM;
             goto easy_perform_cleanup;
         }
     }
-
-    //wolfssl converted
     
     ssl = SSL_new(ssl_ctx);
     if (!SSL_set_tlsext_host_name(ssl, ctx->host_name)) {
