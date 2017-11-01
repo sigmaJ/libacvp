@@ -648,14 +648,14 @@ static void murl_log_peer_cert(SSL *ssl)
 #define READ_CHUNK_SZ 16384
 CURLcode curl_easy_perform(CURL *curl)
 {
-    BIO *conn;
+    FILE *conn;
     int rv;
     int ssl_err;
     int read_cnt = 0;
     char *rbuf = NULL;
     char tbuf[TBUF_MAX];
-    SSL *ssl = NULL;
-    SSL_CTX *ssl_ctx = NULL;
+    WOLFSSL *ssl = NULL;
+    WOLFSSL_CTX *ssl_ctx = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     int cl;
     SessionHandle *ctx = (SessionHandle*)curl;
@@ -664,7 +664,7 @@ CURLcode curl_easy_perform(CURL *curl)
     CURLcode crv;
 
     if (!ctx) {
-	return CURLE_UNKNOWN_OPTION;
+        return CURLE_UNKNOWN_OPTION;
     }
 
     /*
@@ -782,7 +782,7 @@ CURLcode curl_easy_perform(CURL *curl)
         fprintf(stderr, "TLS handshake failed.\n");
         ERR_print_errors_fp(stderr);
         crv = CURLE_SSL_CONNECT_ERROR;
-	goto easy_perform_cleanup;
+        goto easy_perform_cleanup;
     }
 
     /*
@@ -839,49 +839,49 @@ CURLcode curl_easy_perform(CURL *curl)
      */
     rv = 1;
     while (rv) {
-	/*
-	 * Allocate some space to receive the response from the server
-	 */
-	rbuf = realloc(rbuf, read_cnt + READ_CHUNK_SZ);
-	if (!rbuf) {
-	    fprintf(stderr, "realloc failed (%s).\n", __FUNCTION__);
-	    crv = CURLE_OUT_OF_MEMORY;
-	    goto easy_perform_cleanup;
-	}
-	memset(rbuf+read_cnt, 0x0, READ_CHUNK_SZ);
-	
-	/*
-	 * Read the next chunk from the server
-	 */
-        rv = wolfSSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
-        if (rv <= 0) {
-            ssl_err = SSL_get_error(ssl, rv);
-            switch (ssl_err) {
-            case SSL_ERROR_NONE:
-            case SSL_ERROR_ZERO_RETURN:
-                //fprintf(stderr, "wolfSSL_read finished\n");
-                break;
-            default:
-                ossl_err = ERR_get_error();
-                if ((rv < 0) || ossl_err) {
-                    fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
-                            rv, ssl_err, (int)ossl_err);
-                    ERR_print_errors_fp(stderr);
-                    crv = CURLE_USE_SSL_FAILED;
-	            goto easy_perform_cleanup;
-                }
-                break;
-            }
+        /*
+        * Allocate some space to receive the response from the server
+        */
+        rbuf = realloc(rbuf, read_cnt + READ_CHUNK_SZ);
+        if (!rbuf) {
+            fprintf(stderr, "realloc failed (%s).\n", __FUNCTION__);
+            crv = CURLE_OUT_OF_MEMORY;
+            goto easy_perform_cleanup;
         }
-        read_cnt += rv;
-	
-	/*
-	 * Make sure we're not receving too much data from the server.
-	 */
-	if (read_cnt > MURL_RCV_MAX) {
-	    crv = CURLE_FILESIZE_EXCEEDED;
-	    goto easy_perform_cleanup;
-	}
+        memset(rbuf+read_cnt, 0x0, READ_CHUNK_SZ);
+        
+        /*
+        * Read the next chunk from the server
+        */
+            rv = wolfSSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
+            if (rv <= 0) {
+                ssl_err = SSL_get_error(ssl, rv);
+                switch (ssl_err) {
+                case SSL_ERROR_NONE:
+                case SSL_ERROR_ZERO_RETURN:
+                    //fprintf(stderr, "wolfSSL_read finished\n");
+                    break;
+                default:
+                    ossl_err = ERR_get_error();
+                    if ((rv < 0) || ossl_err) {
+                        fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
+                                rv, ssl_err, (int)ossl_err);
+                        ERR_print_errors_fp(stderr);
+                        crv = CURLE_USE_SSL_FAILED;
+                        goto easy_perform_cleanup;
+                    }
+                    break;
+                }
+            }
+            read_cnt += rv;
+        
+        /*
+        * Make sure we're not receving too much data from the server.
+        */
+        if (read_cnt > MURL_RCV_MAX) {
+            crv = CURLE_FILESIZE_EXCEEDED;
+            goto easy_perform_cleanup;
+        }
     }
 
     /*
@@ -894,7 +894,7 @@ CURLcode curl_easy_perform(CURL *curl)
      */
     if (murl_http_parse_response(ctx, rbuf)) {
         crv = CURLE_HTTP2;
-	goto easy_perform_cleanup;
+        goto easy_perform_cleanup;
     }
 
     /*
