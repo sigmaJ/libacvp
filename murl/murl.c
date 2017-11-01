@@ -694,12 +694,12 @@ CURLcode curl_easy_perform(CURL *curl)
     if (crv != CURLE_OK) goto easy_perform_cleanup;
 
     /*
-     * Setup OpenSSL API
+     * Setup WolfSSL API
      */
-    ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+    ssl_ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());
     if (!ssl_ctx) {
         fprintf(stderr, "Failed to create SSL context.\n");
-        ERR_print_errors_fp(stderr);
+        //ERR_print_errors_fp(stderr);
         crv = CURLE_SSL_CONNECT_ERROR;
 	goto easy_perform_cleanup;
     }
@@ -710,7 +710,8 @@ CURLcode curl_easy_perform(CURL *curl)
      * the error handling required when reading/writing to
      * the SSL socket.
      */
-    SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
+    //Not supported by wolfSSL
+    //SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
 
 
     /*
