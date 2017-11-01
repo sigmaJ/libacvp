@@ -627,19 +627,19 @@ static void murl_log_peer_cert(SSL *ssl)
 
     cert = SSL_get_peer_certificate(ssl);
     if (cert) {
-	subject = X509_get_subject_name(cert);
-	if (subject) {
-	    out = BIO_new(BIO_s_mem());
-	    if (!out) {
-		fprintf(stderr, "Unable to allocation OpenSSL BIO\n");
-		return;
-	    }
-	    X509_NAME_print(out, subject, 0);
-	    (void)BIO_flush(out);
-	    BIO_get_mem_ptr(out, &bptr);
-	    //fprintf(stdout, "TLS peer subject name: %s\n", bptr->data); 
-	    BIO_free_all(out);
-	}
+        subject = X509_get_subject_name(cert);
+        if (subject) {
+            out = BIO_new(BIO_s_mem());
+            if (!out) {
+                fprintf(stderr, "Unable to allocation OpenSSL BIO\n");
+                return;
+            }
+            X509_NAME_print(out, subject, 0);
+            (void)BIO_flush(out);
+            BIO_get_mem_ptr(out, &bptr);
+            //fprintf(stdout, "TLS peer subject name: %s\n", bptr->data); 
+            BIO_free_all(out);
+        }
     }
 }
 
@@ -678,8 +678,8 @@ CURLcode curl_easy_perform(CURL *curl)
         cl = 0;
     }
     if (cl > MURL_POST_MAX) {
-	fprintf(stderr, "POST data exceeds %d byte limit\n", MURL_POST_MAX);
-	return CURLE_FILESIZE_EXCEEDED;
+        fprintf(stderr, "POST data exceeds %d byte limit\n", MURL_POST_MAX);
+        return CURLE_FILESIZE_EXCEEDED;
     }
     rbuf = calloc(1, cl+MURL_HDR_MAX);
     if (!rbuf) {
@@ -691,8 +691,9 @@ CURLcode curl_easy_perform(CURL *curl)
      * Split the URL into it's parts
      */
     crv = parseurl(ctx);
-    if (crv != CURLE_OK) goto easy_perform_cleanup;
-
+    if (crv != CURLE_OK) {
+        goto easy_perform_cleanup;
+    }
     /*
      * Setup WolfSSL API
      */
@@ -701,7 +702,7 @@ CURLcode curl_easy_perform(CURL *curl)
         fprintf(stderr, "Failed to create SSL context.\n");
         //ERR_print_errors_fp(stderr);
         crv = CURLE_SSL_CONNECT_ERROR;
-	goto easy_perform_cleanup;
+        goto easy_perform_cleanup;
     }
     /*
      * This is optional.
@@ -722,7 +723,7 @@ CURLcode curl_easy_perform(CURL *curl)
             fprintf(stderr, "Failed to set trust anchors.\n");
             ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CACERT_BADFILE;
-	    goto easy_perform_cleanup;
+            goto easy_perform_cleanup;
         }
         SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
     }
@@ -732,7 +733,7 @@ CURLcode curl_easy_perform(CURL *curl)
         fprintf(stderr, "Unable to allocate a verify parameter structure.\n");
         ERR_print_errors_fp(stderr);
         crv = CURLE_SSL_CONNECT_ERROR;
-	goto easy_perform_cleanup;
+        goto easy_perform_cleanup;
     }
 #if 0
     /* TODO: Enable CRL checks */
@@ -742,7 +743,7 @@ CURLcode curl_easy_perform(CURL *curl)
     X509_VERIFY_PARAM_set_depth(vpm, 7);
     X509_VERIFY_PARAM_set_purpose(vpm, X509_PURPOSE_SSL_SERVER);
     if (ctx->ssl_verify_hostname) {
-	X509_VERIFY_PARAM_set1_host(vpm, ctx->host_name, strnlen(ctx->host_name, MURL_HOSTNAME_MAX));
+        X509_VERIFY_PARAM_set1_host(vpm, ctx->host_name, strnlen(ctx->host_name, MURL_HOSTNAME_MAX));
     }
     SSL_CTX_set1_param(ssl_ctx, vpm);
     X509_VERIFY_PARAM_free(vpm);
@@ -752,13 +753,13 @@ CURLcode curl_easy_perform(CURL *curl)
             fprintf(stderr,"Failed to load client certificate\n");
             ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CERTPROBLEM;
-	    goto easy_perform_cleanup;
+            goto easy_perform_cleanup;
         }
         if (SSL_CTX_use_PrivateKey_file(ssl_ctx, ctx->ssl_key_file, SSL_FILETYPE_PEM) != 1) {
             fprintf(stderr, "Failed to load client private key\n");
             ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CERTPROBLEM;
-	    goto easy_perform_cleanup;
+            goto easy_perform_cleanup;
         }
     }
 
@@ -789,7 +790,7 @@ CURLcode curl_easy_perform(CURL *curl)
      * PSB requires we log the X509 distinguished name of the peer
      */
     if (ctx->ssl_verify_peer) {
-	murl_log_peer_cert(ssl);
+        murl_log_peer_cert(ssl);
     }
 
     /*
@@ -857,20 +858,20 @@ CURLcode curl_easy_perform(CURL *curl)
             if (rv <= 0) {
                 ssl_err = SSL_get_error(ssl, rv);
                 switch (ssl_err) {
-                case SSL_ERROR_NONE:
-                case SSL_ERROR_ZERO_RETURN:
-                    //fprintf(stderr, "wolfSSL_read finished\n");
-                    break;
-                default:
-                    ossl_err = ERR_get_error();
-                    if ((rv < 0) || ossl_err) {
-                        fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
-                                rv, ssl_err, (int)ossl_err);
-                        ERR_print_errors_fp(stderr);
-                        crv = CURLE_USE_SSL_FAILED;
-                        goto easy_perform_cleanup;
-                    }
-                    break;
+                    case SSL_ERROR_NONE:
+                    case SSL_ERROR_ZERO_RETURN:
+                        //fprintf(stderr, "wolfSSL_read finished\n");
+                        break;
+                    default:
+                        ossl_err = ERR_get_error();
+                        if ((rv < 0) || ossl_err) {
+                            fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
+                                    rv, ssl_err, (int)ossl_err);
+                            ERR_print_errors_fp(stderr);
+                            crv = CURLE_USE_SSL_FAILED;
+                            goto easy_perform_cleanup;
+                        }
+                        break;
                 }
             }
             read_cnt += rv;
@@ -907,22 +908,26 @@ CURLcode curl_easy_perform(CURL *curl)
     crv = CURLE_OK;
 easy_perform_cleanup:
     if (ssl) {
-	SSL_shutdown(ssl);
-	SSL_free(ssl);
+        SSL_shutdown(ssl);
+        SSL_free(ssl);
     }
-    if (ssl_ctx) SSL_CTX_free(ssl_ctx);
-    if (rbuf) free(rbuf);
+    if (ssl_ctx) {
+        SSL_CTX_free(ssl_ctx);
+    }
+    if (rbuf) {
+        free(rbuf);
+    }
     return crv;
 }
 
 static CURLcode getinfo_long(SessionHandle *data, CURLINFO info, long *param_longp)
 {
     switch (info) {
-    case CURLINFO_RESPONSE_CODE:
-        *param_longp = data->http_status_code;
-        break;
-    default:
-        return CURLE_BAD_FUNCTION_ARGUMENT;
+        case CURLINFO_RESPONSE_CODE:
+            *param_longp = data->http_status_code;
+            break;
+        default:
+            return CURLE_BAD_FUNCTION_ARGUMENT;
     }
 
     return CURLE_OK;
