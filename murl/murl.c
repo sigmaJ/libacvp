@@ -759,23 +759,23 @@ CURLcode curl_easy_perform(CURL *curl)
         }
     }
     
-    ssl = SSL_new(ssl_ctx);
+    ssl = wolfSSL_new(ssl_ctx);
+    // SSL_set_tlsext_host_name may need to be converted
     if (!SSL_set_tlsext_host_name(ssl, ctx->host_name)) {
         fprintf(stderr, "Warning: SNI extension not set.\n");
     }
+    // Resume wolfssl converted
     
     SOCKET_T sockfd = 0;
     
     tcp_connect(&sockfd, ctx->host_name, ctx->server_port, 0, 0, ssl);
 
     SSL_set_fd(ssl, sockfd);
-
-    //end wolfssl converted
     
-    rv = SSL_connect(ssl);
+    rv = wolfSSL_connect(ssl);
     if (rv <= 0) {
         fprintf(stderr, "TLS handshake failed.\n");
-        ERR_print_errors_fp(stderr);
+        //ERR_print_errors_fp(stderr);
         crv = CURLE_SSL_CONNECT_ERROR;
         goto easy_perform_cleanup;
     }
@@ -825,6 +825,7 @@ CURLcode curl_easy_perform(CURL *curl)
     wolfSSL_write(ssl, rbuf, strlen(rbuf));
     wolfSSL_write(ssl, ctx->post_fields, cl);
 
+    // ERR_clear_error may need to be converted
     ERR_clear_error();
     free(rbuf);
     rbuf = NULL;
@@ -850,18 +851,19 @@ CURLcode curl_easy_perform(CURL *curl)
         */
             rv = wolfSSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
             if (rv <= 0) {
-                ssl_err = SSL_get_error(ssl, rv);
+                ssl_err = wolfSSL_get_error(ssl, rv);
                 switch (ssl_err) {
-                    case SSL_ERROR_NONE:
+                    //case SSL_ERROR_NONE:
                     case SSL_ERROR_ZERO_RETURN:
                         //fprintf(stderr, "wolfSSL_read finished\n");
                         break;
                     default:
+                        // ERR_get_error may also need to be converted
                         ossl_err = ERR_get_error();
                         if ((rv < 0) || ossl_err) {
                             fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
                                     rv, ssl_err, (int)ossl_err);
-                            ERR_print_errors_fp(stderr);
+                            //ERR_print_errors_fp(stderr);
                             crv = CURLE_USE_SSL_FAILED;
                             goto easy_perform_cleanup;
                         }
@@ -869,7 +871,7 @@ CURLcode curl_easy_perform(CURL *curl)
                 }
             }
             read_cnt += rv;
-        
+                    
         /*
         * Make sure we're not receving too much data from the server.
         */
@@ -902,11 +904,11 @@ CURLcode curl_easy_perform(CURL *curl)
     crv = CURLE_OK;
 easy_perform_cleanup:
     if (ssl) {
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
+        wolfSSL_shutdown(ssl);
+        wolfSSL_free(ssl);
     }
     if (ssl_ctx) {
-        SSL_CTX_free(ssl_ctx);
+        wolfSSL_CTX_free(ssl_ctx);
     }
     if (rbuf) {
         free(rbuf);
