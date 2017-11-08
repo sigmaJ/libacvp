@@ -42,18 +42,15 @@
 *
 ***************************************************************************/
 
+#include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <openssl/engine.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/x509_vfy.h>
+#include <wolfssl/ssl.h>
+#include <wolfssl/test.h>
 #include "murl.h"
 #include "murl_lcl.h"
 
@@ -618,7 +615,8 @@ static CURLcode parseurl(SessionHandle *data)
  * This function will log the X509 distinguished name of the TLS
  * peer certificate.
  */
-static void murl_log_peer_cert(SSL *ssl)
+//TODO
+/*static void murl_log_peer_cert(SSL *ssl)
 {
     X509 *cert;
     X509_NAME *subject;
@@ -641,7 +639,7 @@ static void murl_log_peer_cert(SSL *ssl)
             BIO_free_all(out);
         }
     }
-}
+}*/
 
 
 #define TBUF_MAX 1024
@@ -726,7 +724,7 @@ CURLcode curl_easy_perform(CURL *curl)
             crv = CURLE_SSL_CACERT_BADFILE;
             goto easy_perform_cleanup;
         }
-        wolfSSL_CTX_set_verify(ssl_ctx, WOLFSSL_VERIFY_PEER|WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+        wolfSSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT , NULL);
     }
 
 #if 0
@@ -734,13 +732,15 @@ CURLcode curl_easy_perform(CURL *curl)
     X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_CRL_CHECK |
                                 X509_V_FLAG_CRL_CHECK_ALL);
 #endif
-    wolSSL_CTX_set_verify_depth(ssl_ctx, 7)
+  //TODO put depth back
+    //wolfSSL_CTX_set_verify_depth(ssl_ctx, 7);
     //X509_VERIFY_PARAM_set_purpose(vpm, X509_PURPOSE_SSL_SERVER);
     if (ctx->ssl_verify_hostname) {
-        char *hostname = malloc(MURL_HOSNAME_MAX + 1);
+        char *hostname = malloc(MURL_HOSTNAME_MAX + 1);
         strncpy(hostname, ctx->host_name, MURL_HOSTNAME_MAX);
         hostname[MURL_HOSTNAME_MAX] = '\0';
-        wolfSSL_set_tlsext_host_name(ssl, hostname);
+        //TODO reenable hostname setting
+        //wolfSSL_set_tlsext_host_name(ssl, hostname);
         //X509_VERIFY_PARAM_set1_host(vpm, ctx->host_name, strnlen(ctx->host_name, MURL_HOSTNAME_MAX));
     }
 
@@ -751,7 +751,7 @@ CURLcode curl_easy_perform(CURL *curl)
             crv = CURLE_SSL_CERTPROBLEM;
             goto easy_perform_cleanup;
         }
-        if (wolfSSL_CTX_use_PrivateKey_file(ssl_ctx, ctx->ssl_key_file, WOLFSSL_FILETYPE_PEM) != 1) {
+        if (wolfSSL_CTX_use_PrivateKey_file(ssl_ctx, ctx->ssl_key_file, SSL_FILETYPE_PEM) != 1) {
             fprintf(stderr, "Failed to load client private key\n");
             //ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CERTPROBLEM;
@@ -761,7 +761,8 @@ CURLcode curl_easy_perform(CURL *curl)
     
     ssl = wolfSSL_new(ssl_ctx);
     // SSL_set_tlsext_host_name may need to be converted
-    if (!SSL_set_tlsext_host_name(ssl, ctx->host_name)) {
+    //TODO reenable hostname setting
+    if (1){//!wolfSSL_set_tlsext_host_name(ssl, ctx->host_name)) {
         fprintf(stderr, "Warning: SNI extension not set.\n");
     }
     // Resume wolfssl converted
@@ -770,7 +771,7 @@ CURLcode curl_easy_perform(CURL *curl)
     
     tcp_connect(&sockfd, ctx->host_name, ctx->server_port, 0, 0, ssl);
 
-    SSL_set_fd(ssl, sockfd);
+    wolfSSL_set_fd(ssl, sockfd);
     
     rv = wolfSSL_connect(ssl);
     if (rv <= 0) {
@@ -784,7 +785,8 @@ CURLcode curl_easy_perform(CURL *curl)
      * PSB requires we log the X509 distinguished name of the peer
      */
     if (ctx->ssl_verify_peer) {
-        murl_log_peer_cert(ssl);
+      //TODO
+        //murl_log_peer_cert(ssl);
     }
 
     /*
@@ -1087,23 +1089,25 @@ void curl_slist_free_all(struct curl_slist *list)
     } while (next);
 }
 
+
+//TODO
 static void Curl_ossl_cleanup(void)
 {
     /* Free ciphers and digests lists */
-    EVP_cleanup();
+//    EVP_cleanup();
 
     /* Free engine list */
-    ENGINE_cleanup();
+//    ENGINE_cleanup();
 
     /* Free OpenSSL ex_data table */
-    CRYPTO_cleanup_all_ex_data();
+//    CRYPTO_cleanup_all_ex_data();
 
     /* Free OpenSSL error strings */
-    ERR_free_strings();
+//    ERR_free_strings();
 
     /* Free thread local error state, destroying hash upon zero refcount */
-    ERR_remove_thread_state(NULL);
-    ERR_remove_state(0);
+//    ERR_remove_thread_state(NULL);
+//    ERR_remove_state(0);
 }
 
 void curl_easy_cleanup(CURL *curl)

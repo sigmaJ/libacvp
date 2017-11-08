@@ -9,7 +9,7 @@ OBJECTS=$(SOURCES:.c=.o)
 TEST_SOURCES=test/ut_main.c test/ut_tls.c test/ut_get.c test/ut_post.c test/ut_util.c ../src/parson.c
 TEST_OBJECTS=$(TEST_SOURCES:.c=.o)
 
-all: murl test libmurl.a libmurl.so
+all: murl libmurl.a libmurl.so
 
 libmurl.a: $(OBJECTS)
 	ar rcs libmurl.a $(OBJECTS)
@@ -18,14 +18,14 @@ libmurl.a: $(OBJECTS)
 	$(CC) $(INCDIRS) $(CFLAGS) -c $< -o $@
 
 libmurl.so: $(OBJECTS)
-	$(CC) $(INCDIRS) $(CFLAGS) -shared -Wl,-soname,libmurl.so.1.0.0 -o libmurl.so.1.0.0 $(OBJECTS) $(LDFLAGS) -lcrypto -lssl
+	$(CC) $(INCDIRS) $(CFLAGS) -shared -Wl,-soname,libmurl.so.1.0.0 -o libmurl.so.1.0.0 $(OBJECTS) $(LDFLAGS) -lcrypto -lwolfssl
 	ln -fs libmurl.so.1.0.0 libmurl.so
 
 murl:	libmurl.so
-	$(CC) $(INCDIRS) -I.. $(CFLAGS) murl_cli.c -o murl $(LDFLAGS) -L. -lmurl -lcrypto -lssl 
+	$(CC) $(INCDIRS) -I.. $(CFLAGS) murl_cli.c -o murl $(LDFLAGS) -L. -lmurl -lcrypto -lwolfssl 
 
 test:	$(TEST_OBJECTS) libmurl.so
-	$(CC) $(INCDIRS) -I.. $(CFLAGS) $(TEST_OBJECTS) -o ut-murl $(LDFLAGS) -L. -lmurl -lcrypto -lssl -lpthread
+	$(CC) $(INCDIRS) -I.. $(CFLAGS) $(TEST_OBJECTS) -o ut-murl $(LDFLAGS) -L. -lmurl -lcrypto -lwolfssl -lpthread
 
 
 clean:

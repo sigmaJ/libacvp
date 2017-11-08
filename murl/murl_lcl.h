@@ -29,7 +29,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern "C" {
 #endif
 
-#include <openssl/ssl.h>
+#include <wolfssl/ssl.h>
 #include "murl.h"
 
 /* Maximum size of data that can be in HTTP POST */
@@ -62,7 +62,7 @@ typedef struct SessionHandle_ {
     struct curl_slist	    *headers;
     curl_write_callback	    write_func;
 
-    SSL	*ssl;
+    WOLFSSL	*ssl;
 
     /* The following members are for HTTP parsing */
     int			http_status_code;  /* HTTP response from server */
