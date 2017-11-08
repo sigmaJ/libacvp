@@ -168,8 +168,8 @@ ACVP_RESULT wolf_acvp_register(ACVP_CTX** ctxp, char* ssl_version, ACVP_LOG_LVL 
     /*
      * Setup the crypto module attributes
      */
-    snprintf(ssl_version, 10, "%08x", (unsigned int)SSLeay());
-    rv = acvp_set_module_info(ctx, "OpenSSL", "software", ssl_version, "FOM 6.2a");
+    //snprintf(ssl_version, 10, "%08x", (unsigned int)SSLeay());
+    rv = acvp_set_module_info(ctx, "WolfSSL", "software", ssl_version, "FOM 6.2a");
     if (rv != ACVP_SUCCESS) {
         printf("Failed to set module info\n");
         return rv;
