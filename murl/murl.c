@@ -739,8 +739,7 @@ CURLcode curl_easy_perform(CURL *curl)
         char *hostname = malloc(MURL_HOSTNAME_MAX + 1);
         strncpy(hostname, ctx->host_name, MURL_HOSTNAME_MAX);
         hostname[MURL_HOSTNAME_MAX] = '\0';
-        //TODO reenable hostname setting
-        //wolfSSL_set_tlsext_host_name(ssl, hostname);
+        wolfSSL_set_tlsext_host_name(ssl, hostname);
         //X509_VERIFY_PARAM_set1_host(vpm, ctx->host_name, strnlen(ctx->host_name, MURL_HOSTNAME_MAX));
     }
 
@@ -760,9 +759,7 @@ CURLcode curl_easy_perform(CURL *curl)
     }
     
     ssl = wolfSSL_new(ssl_ctx);
-    // SSL_set_tlsext_host_name may need to be converted
-    //TODO reenable hostname setting
-    if (1){//!wolfSSL_set_tlsext_host_name(ssl, ctx->host_name)) {
+    if (!wolfSSL_set_tlsext_host_name(ssl, ctx->host_name)) {
         fprintf(stderr, "Warning: SNI extension not set.\n");
     }
     // Resume wolfssl converted
@@ -851,25 +848,27 @@ CURLcode curl_easy_perform(CURL *curl)
         /*
         * Read the next chunk from the server
         */
-            rv = wolfSSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
-            if (rv <= 0) {
-                ssl_err = wolfSSL_get_error(ssl, rv);
-                switch (ssl_err) {
-                    //case SSL_ERROR_NONE:
-                    case SSL_ERROR_ZERO_RETURN:
-                        //fprintf(stderr, "wolfSSL_read finished\n");
-                        break;
-                    default:
-                        // ERR_get_error may also need to be converted
-                        ossl_err = ERR_get_error();
-                        if ((rv < 0) || ossl_err) {
-                            fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
-                                    rv, ssl_err, (int)ossl_err);
-                            //ERR_print_errors_fp(stderr);
-                            crv = CURLE_USE_SSL_FAILED;
-                            goto easy_perform_cleanup;
-                        }
-                        break;
+        rv = wolfSSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
+        if (rv <= 0) {
+            ssl_err = wolfSSL_get_error(ssl, rv);
+            switch (ssl_err) {
+                //case SSL_ERROR_NONE:
+                case SSL_ERROR_ZERO_RETURN:
+                    //fprintf(stderr, "wolfSSL_read finished\n");
+                    break;
+                default:
+                    // ERR_get_error may also need to be converted
+                    ossl_err = ERR_get_error();
+                    if ((rv < 0) || ossl_err) {
+                        fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
+                                rv, ssl_err, (int)ossl_err);
+                        char x[80];
+                        fprintf(stderr, "wolfSSL_err_string: %s\n", wolfSSL_ERR_error_string(ssl_err, x));
+                        ERR_print_errors_fp(stderr);
+                        crv = CURLE_USE_SSL_FAILED;
+                        goto easy_perform_cleanup;
+                    }
+                    break;
                 }
             }
             read_cnt += rv;
