@@ -27,7 +27,7 @@
 * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *****************************************************************************/
-#include <openssl/bn.h>
+#include <wolfssl/openssl/bn.h>
 #ifndef acvp_h
 #define acvp_h
 

@@ -54,6 +54,7 @@
 #include "murl.h"
 #include "murl_lcl.h"
 
+
 static unsigned int initialized = 0;
 #define DEBUGF(x) do { } while (0)
 
@@ -647,6 +648,7 @@ static CURLcode parseurl(SessionHandle *data)
 CURLcode curl_easy_perform(CURL *curl)
 {
     
+    printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHH!!!!!!");
     //wolfssl converted
     
     int rv;

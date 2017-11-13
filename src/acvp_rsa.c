@@ -137,17 +137,17 @@ static ACVP_RESULT acvp_rsa_init_tc_keygen(ACVP_CTX *ctx,
     case ACVP_RSA_MODE_KEYGEN:
         stc->keygen_tc = calloc(1, sizeof(ACVP_RSA_KEYGEN_TC));
         if (!stc->keygen_tc) return ACVP_MALLOC_FAIL;
-        stc->keygen_tc->e = calloc(1, sizeof(BIGNUM));
+        stc->keygen_tc->e = calloc(1, sizeof(WOLFSSL_BIGNUM));
         stc->keygen_tc->seed = calloc(1, sizeof(ACVP_RSA_SEEDLEN_MAX));
         stc->keygen_tc->hash_alg = calloc(12, sizeof(char));
         stc->keygen_tc->pub_exp = calloc(6, sizeof(char));
         stc->keygen_tc->prime_test = calloc(5, sizeof(char));
         if (rand_pq == RSA_RAND_PQ_B32 || rand_pq == RSA_RAND_PQ_B34 ||
             rand_pq == RSA_RAND_PQ_B35 || rand_pq == RSA_RAND_PQ_B36) {
-            stc->keygen_tc->p = calloc(1, sizeof(BIGNUM));
-            stc->keygen_tc->q = calloc(1, sizeof(BIGNUM));
-            stc->keygen_tc->n = calloc(1, sizeof(BIGNUM));
-            stc->keygen_tc->d = calloc(1, sizeof(BIGNUM));
+            stc->keygen_tc->p = calloc(1, sizeof(WOLFSSL_BIGNUM));
+            stc->keygen_tc->q = calloc(1, sizeof(WOLFSSL_BIGNUM));
+            stc->keygen_tc->n = calloc(1, sizeof(WOLFSSL_BIGNUM));
+            stc->keygen_tc->d = calloc(1, sizeof(WOLFSSL_BIGNUM));
         }
         if (rand_pq == RSA_RAND_PQ_B35 || rand_pq == RSA_RAND_PQ_B36) {
             stc->keygen_tc->prime_seed_p2 = calloc(1, sizeof(ACVP_RSA_SEEDLEN_MAX));
