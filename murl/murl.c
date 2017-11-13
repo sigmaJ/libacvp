@@ -98,6 +98,10 @@ static CURLcode curl_global_init()
  */
 CURL *curl_easy_init(void)
 {
+    wolfSSL_Debugging_ON();
+    char x[10000];
+    wolfSSL_get_ciphers(x, 10000);
+    printf(x);
     CURLcode result;
     SessionHandle *data;
 
@@ -647,8 +651,6 @@ static CURLcode parseurl(SessionHandle *data)
 #define READ_CHUNK_SZ 16384
 CURLcode curl_easy_perform(CURL *curl)
 {
-    
-    printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHH!!!!!!");
     //wolfssl converted
     
     int rv;
