@@ -774,6 +774,17 @@ CURLcode curl_easy_perform(CURL *curl)
 
     wolfSSL_set_fd(ssl, sockfd);
     
+    /*
+     * Enable secure renogotiation (RFC 5746)
+     */
+    if (wolfSSL_UseSecureRenegotiation(ssl) != WOLFSSL_SUCCESS) {
+        fprintf(stderr, "Failed to enable secure renogotiation.\n");
+        //ERR_print_errors_fp(stderr);
+        //TODO: Use correct value
+        crv = CURLE_SSL_CACERT_BADFILE;
+        goto easy_perform_cleanup;
+    }
+    
     rv = wolfSSL_connect(ssl);
     if (rv <= 0) {
         fprintf(stderr, "TLS handshake failed.\n");
