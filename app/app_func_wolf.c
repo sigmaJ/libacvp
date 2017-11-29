@@ -251,9 +251,16 @@ ACVP_RESULT wolf_acvp_register(ACVP_CTX** ctxp, char* ssl_version, ACVP_LOG_LVL 
     CHECK_ENABLE_CAP_RV(rv);
      */
     rv = acvp_enable_sym_cipher_cap(ctx, ACVP_AES_CBC, ACVP_DIR_BOTH, ACVP_KO_NA, ACVP_IVGEN_SRC_NA, ACVP_IVGEN_MODE_NA, &app_aes_handler);
-   CHECK_ENABLE_CAP_RV(rv);
-   rv = acvp_enable_sym_cipher_cap_parm(ctx, ACVP_AES_CBC, ACVP_SYM_CIPH_KEYLEN, 128);
-   CHECK_ENABLE_CAP_RV(rv);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_sym_cipher_cap_parm(ctx, ACVP_AES_CBC, ACVP_SYM_CIPH_KEYLEN, 128);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_sym_cipher_cap_parm(ctx, ACVP_AES_CBC, ACVP_SYM_CIPH_KEYLEN, 192);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_sym_cipher_cap_parm(ctx, ACVP_AES_CBC, ACVP_SYM_CIPH_KEYLEN, 256);
+    CHECK_ENABLE_CAP_RV(rv);
+    rv = acvp_enable_sym_cipher_cap_parm(ctx, ACVP_AES_CBC, ACVP_SYM_CIPH_PTLEN, 128);
+    CHECK_ENABLE_CAP_RV(rv);
+
 
     /*
      * Now that we have a test session, we register with
@@ -311,10 +318,12 @@ ACVP_RESULT wolf_acvp_run(ACVP_CTX* ctx)
 /**
  * AES test handler.
  */
+Aes aes; // need to maintain across calls for MCT
 ACVP_RESULT app_aes_handler(ACVP_TEST_CASE *test_case)
 {
-    ACVP_SYM_CIPHER_TC    *tc;
-    Aes128 aes;
+    ACVP_SYM_CIPHER_TC *tc;
+    int ct_len, pt_len;
+    unsigned char *iv = 0;
 
     if (!test_case) {
         return ACVP_INVALID_ARG;
@@ -322,28 +331,74 @@ ACVP_RESULT app_aes_handler(ACVP_TEST_CASE *test_case)
 
     tc = test_case->tc.symmetric;
 
+    /* Begin encrypt code section */
+    
     switch (tc->cipher) {
-		case ACVP_AES128:
-			break;
+    case ACVP_AES_CBC:
+        switch (tc->key_len) {
+        case 128:
+        case 192:
+        case 256:
+            //no init required
+            break;
         default:
-            printf("Error: Unsupported encryption algorithm requested by ACVP server\n");
+            printf("Unsupported AES key length\n");
             return ACVP_NO_CAP;
             break;
+        }
+        break;
+    default:
+        printf("Error: Unsupported AES mode requested by ACVP server\n");
+        return ACVP_NO_CAP;
+        break;
+    }
+
+    /* If Monte Carlo we need to be able to init and then update
+     * one thousand times before we complete each iteration.
+     */
+    if (tc->test_type == ACVP_SYM_TEST_TYPE_MCT) {
+        if (tc->direction == ACVP_DIR_ENCRYPT) {
+            if (tc->mct_index == 0) {
+                wolfCrypt_Init();
+                wc_AesSetKey(&aes, tc->key, tc->key_len, tc->iv, AES_ENCRYPTION);
+            }
+            wc_AesCbcEncrypt(&aes, tc->ct, tc->pt, tc->pt_len);
+            tc->ct = malloc(tc->pt_len * sizeof(unsigned char));
+            ct_len = tc->pt_len;
+            tc->ct_len = ct_len;
+            //printf("%d!!!", ct_len);
+        } else if (tc->direction == ACVP_DIR_DECRYPT) {
+            /*if (tc->mct_index == 0) {
+                EVP_DecryptInit_ex(&cipher_ctx, cipher, NULL, tc->key, iv);
+                EVP_CIPHER_CTX_set_padding(&cipher_ctx, 0);
+            }
+            EVP_DecryptUpdate(&cipher_ctx, tc->pt, &pt_len, tc->ct, tc->ct_len);
+            tc->pt_len = pt_len;*/
+        } else {
+            printf("Unsupported direction\n");
+            return ACVP_UNSUPPORTED_OP;
+        }
+    } else {
+        if (tc->direction == ACVP_DIR_ENCRYPT) {
+            wolfCrypt_Init();  
+            wc_AesSetKey(&aes, tc->key, tc->key_len, tc->iv, AES_ENCRYPTION);
+            wc_AesCbcEncrypt(&aes, tc->ct, tc->pt, tc->pt_len);
+            ct_len = tc->pt_len;
+            tc->ct_len = ct_len;
+            printf("%d???", ct_len);
+        } else if (tc->direction == ACVP_DIR_DECRYPT) {
+        /*    EVP_DecryptInit_ex(&cipher_ctx, cipher, NULL, tc->key, iv);
+            EVP_CIPHER_CTX_set_padding(&cipher_ctx, 0);
+            EVP_DecryptUpdate(&cipher_ctx, tc->pt, &pt_len, tc->ct, tc->ct_len);
+            tc->pt_len = pt_len;
+            EVP_DecryptFinal_ex(&cipher_ctx, tc->pt + pt_len, &pt_len);
+            tc->pt_len += pt_len;
+        */} else {
+            printf("Unsupported direction\n");
+            return ACVP_UNSUPPORTED_OP;
+        }
     }
     
-    if (tc->test_type == ACVP_SYM_CIPH_TESTTYPE) {
-        if (wc_AesSetKey(&aes, tc->key, tc->key_len, tc->iv, AES_ENCRYPTION)) {
-            printf("\nCrypto module error, wc_AesSetKey failed\n");
-            return ACVP_CRYPTO_MODULE_FAIL;
-        }
-        if (wc_AesCbcEncrypt(&aes, tc->ct, tc->pt, tc->pt_len)) {
-            printf("\nCrypto module error, wc_AesCbcEncrypt failed\n");
-            return ACVP_CRYPTO_MODULE_FAIL;
-        }
-    }
-
-    wc_AesFreeCavium(&aes);
-
     return ACVP_SUCCESS;
 }
 
