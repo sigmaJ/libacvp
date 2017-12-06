@@ -24,7 +24,7 @@ acvp_app: app/app_main.c libacvp.a
 	$(CC) $(INCDIRS) $(CFLAGS) -o $@ app/app_main.c -L. $(LDFLAGS) -lacvp -lcrypto -lssl -lmurl -ldl -lwolfssl
 
 wolf_app: app/app_main_wolf.c libacvp.a
-	$(CC) $(INCDIRS) $(CFLAGS) -o $@ app/app_main_wolf.c -L. $(LDFLAGS) -lacvp -lcrypto -lssl -lmurl -ldl -lwolfssl
+	$(CC) $(INCDIRS) $(CFLAGS) -o $@ app/app_main_wolf.c app/app_func_wolf.c -L. $(LDFLAGS) -lacvp -lcrypto -lssl -lmurl -ldl -lwolfssl
 
 clean:
 	rm -f *.[ao]
@@ -33,5 +33,10 @@ clean:
 	rm -f libacvp.so.1.0.0
 	rm -f acvp_app
 	rm -f wolf_app
+	rm -f wolf_app_unit_tests
 	rm -f testgcm
 
+tests: wolf_app_unit_tests
+
+wolf_app_unit_tests: app/tests/wolf_app/wolf_app_tests.c app/tests/wolf_app/wolf_app_tests_sha.c app/tests/wolf_app/wolf_app_tests_main.c libacvp.a 
+	$(CC) -Wl,--wrap=acvp_create_test_session,--wrap=acvp_set_server,--wrap=acvp_set_vendor_info,--wrap=acvp_set_module_info,--wrap=acvp_set_path_segment,--wrap=acvp_set_cacerts,--wrap=acvp_set_certkey,--wrap=acvp_enable_hash_cap,--wrap=acvp_register,--wrap=acvp_process_tests,--wrap=acvp_check_test_results,--wrap=acvp_free_test_session,--wrap=acvp_cleanup $(INCDIRS) $(CFLAGS) -o $@ app/tests/wolf_app/wolf_app_tests_main.c app/tests/wolf_app/wolf_app_tests_sha.c app/tests/wolf_app/wolf_app_tests.c app/app_func_wolf.c -L. $(LDFLAGS) -lacvp -lcrypto -lssl -lmurl -ldl -lwolfssl -lcmocka 

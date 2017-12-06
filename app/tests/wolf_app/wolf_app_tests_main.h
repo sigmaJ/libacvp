@@ -1,0 +1,28 @@
+ACVP_RESULT __wrap_acvp_create_test_session(ACVP_CTX** ctxp, ACVP_RESULT (*progress)(char *), ACVP_LOG_LVL level);
+ACVP_RESULT __wrap_acvp_set_server(ACVP_CTX* ctx, char* server, int port);
+ACVP_RESULT __wrap_acvp_set_vendor_info(ACVP_CTX* ctx, char* org, char* site, char* name, char* email);
+ACVP_RESULT __wrap_acvp_set_module_info(ACVP_CTX* ctx, char* name, char* type, char* ssl_version, char* fom);
+ACVP_RESULT __wrap_acvp_set_path_segment(ACVP_CTX* ctx, char* path_segment);
+ACVP_RESULT __wrap_acvp_set_cacerts(ACVP_CTX* ctx, char* ca_chain_file);
+ACVP_RESULT __wrap_acvp_set_certkey(ACVP_CTX* ctx, char* cert_file, char* key_file);
+ACVP_RESULT __wrap_acvp_enable_hash_cap(ACVP_CTX* ctx, ACVP_CIPHER cipher, ACVP_RESULT (*handler)(ACVP_TEST_CASE*));
+ACVP_RESULT __wrap_acvp_register(ACVP_CTX* ctx);
+ACVP_RESULT __wrap_acvp_process_tests(ACVP_CTX**);
+ACVP_RESULT __wrap_acvp_check_test_results(ACVP_CTX**);
+ACVP_RESULT __wrap_acvp_free_test_session(ACVP_CTX**);
+void __wrap_acvp_cleanup();
+
+void test_fail_create_test_session(void**);
+void test_fail_set_server(void**);
+void test_fail_set_vendor_info(void**);
+void test_fail_set_module_info(void**);
+void test_fail_set_path_segment(void**);
+void test_fail_set_cacerts(void**);
+void test_fail_set_certkey(void**);
+void test_fail_enable_hash_cap(void**);
+void test_fail_register(void**);
+void test_succeed_main_registration_flow(void**);
+void test_fail_process_tests(void** );
+void test_fail_check_test_results(void**);
+void test_fail_free_test_session(void**);
+void test_succeed_main_run_flow(void**);
