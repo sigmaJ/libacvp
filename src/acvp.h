@@ -372,8 +372,16 @@ typedef enum acvp_sym_cipher_parameter {
     ACVP_SYM_CIPH_IVLEN,
     ACVP_SYM_CIPH_PTLEN,
     ACVP_SYM_CIPH_AADLEN,
+    ACVP_SYM_CIPH_KW_MODE,
 } ACVP_SYM_CIPH_PARM;
 
+typedef enum acvp_sym_kw_mode {
+    ACVP_SYM_KW_NONE = 0,
+    ACVP_SYM_KW_CIPHER,
+    ACVP_SYM_KW_INVERSE,
+    ACVP_SYM_KW_MAX
+} ACVP_SYM_KW_MODE;
+ 
 typedef enum acvp_sym_cipher_testtype {
     ACVP_SYM_TEST_TYPE_NONE = 0,
     ACVP_SYM_TEST_TYPE_AFT,
@@ -441,6 +449,7 @@ typedef struct acvp_sym_cipher_tc_t {
     unsigned char   *tag; /* Aead tag */
     unsigned char   *iv_ret; /* updated IV used for TDES MCT */
     unsigned char   *iv_ret_after; /* updated IV used for TDES MCT */
+    unsigned int kwcipher;
     unsigned int key_len;
     unsigned int pt_len;
     unsigned int aad_len;
@@ -646,7 +655,7 @@ typedef struct acvp_rsa_keygen_tc_t {
  * passed between libacvp and the crypto module.
  */
 typedef struct acvp_rsa_sig_attrs_tc_t {
-    ACVP_RSA_MODE mode; // "sigGen" 
+    ACVP_RSA_MODE mode;
     unsigned int  tc_id;    /* Test case id */
     unsigned int  modulo;
     char *hash_alg;
@@ -661,6 +670,7 @@ typedef struct acvp_rsa_sig_attrs_tc_t {
 typedef struct acvp_rsa_sig_tc_t {
     ACVP_RSA_MODE mode; // "sigGen" "sigVer"
     char *sig_type; // "X9.31"
+    char pass;
     ACVP_RSA_SIG_ATTRS_TC *sig_attrs_tc;
 } ACVP_RSA_SIG_TC;
 
@@ -799,6 +809,7 @@ enum acvp_result {
     ACVP_INVALID_ARG,
     ACVP_CRYPTO_MODULE_FAIL,
     ACVP_CRYPTO_TAG_FAIL,
+    ACVP_CRYPTO_WRAP_FAIL,
     ACVP_NO_TOKEN,
     ACVP_NO_CAP,
     ACVP_MALFORMED_JSON,
@@ -843,6 +854,12 @@ ACVP_RESULT acvp_enable_sym_cipher_cap(
     ACVP_SYM_CIPH_IVGEN_MODE ivgen_mode,
         ACVP_RESULT (*crypto_handler)(ACVP_TEST_CASE *test_case));
 
+/* TODO - need brief */
+ACVP_RESULT acvp_enable_sym_cipher_cap_value(
+    ACVP_CTX *ctx,
+    ACVP_CIPHER cipher,
+    ACVP_SYM_CIPH_PARM param,
+    int length);
 
 /*! @brief acvp_enable_sym_cipher_cap_parm() allows an application to specify
        operational parameters to be used for a given cipher during a
@@ -1031,14 +1048,6 @@ ACVP_RESULT acvp_enable_rsa_primes_parm (ACVP_CTX *ctx,
                            );
 
 ACVP_RESULT acvp_enable_rsa_cap_sig_type_parm (ACVP_CTX *ctx,
-                             ACVP_CIPHER cipher,
-                             ACVP_RSA_MODE mode,
-                             ACVP_RSA_SIG_TYPE sig_type,
-                             int mod,
-                             char *hash
-                             );
-
-ACVP_RESULT acvp_enable_rsa_cap_sig_type_salt_parm (ACVP_CTX *ctx,
                              ACVP_CIPHER cipher,
                              ACVP_RSA_MODE mode,
                              ACVP_RSA_SIG_TYPE sig_type,
