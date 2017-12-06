@@ -42,20 +42,18 @@
 *
 ***************************************************************************/
 
+#include <string.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <openssl/engine.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/x509_vfy.h>
+#include <wolfssl/ssl.h>
+#include <wolfssl/test.h>
 #include "murl.h"
 #include "murl_lcl.h"
+
 
 static unsigned int initialized = 0;
 #define DEBUGF(x) do { } while (0)
@@ -68,16 +66,11 @@ static unsigned int initialized = 0;
  */
 static int Curl_ossl_init(void)
 {
-    ENGINE_load_builtin_engines();
-
-    /* Lets get nice error messages */
-    SSL_load_error_strings();
-
     /* Init the global ciphers and digests */
-    if (!SSLeay_add_ssl_algorithms())
+    if (!wolfSSL_library_init())
         return 0;
 
-    OpenSSL_add_all_algorithms();
+    wolfSSL_add_all_algorithms();
 
     return 1;
 }
@@ -105,6 +98,10 @@ static CURLcode curl_global_init()
  */
 CURL *curl_easy_init(void)
 {
+    wolfSSL_Debugging_ON();
+//    char x[10000];
+//    wolfSSL_get_ciphers(x, 10000);
+//    printf(x);
     CURLcode result;
     SessionHandle *data;
 
@@ -266,6 +263,8 @@ CURLcode curl_easy_setopt(CURL *curl, CURLoption tag, ...)
     return result;
 }
 
+#if 0
+
 /*
  * This function simply opens a TCP connection using
  * the BIO interface. Returns the file descriptor for
@@ -351,6 +350,8 @@ static BIO *create_connection_v6(char *address, int port)
 
     return(conn);
 }
+
+#endif
 
 /*
  * Parse URL and fill in the relevant members of the connection struct.
@@ -619,7 +620,8 @@ static CURLcode parseurl(SessionHandle *data)
  * This function will log the X509 distinguished name of the TLS
  * peer certificate.
  */
-static void murl_log_peer_cert(SSL *ssl)
+//TODO
+/*static void murl_log_peer_cert(SSL *ssl)
 {
     X509 *cert;
     X509_NAME *subject;
@@ -628,36 +630,36 @@ static void murl_log_peer_cert(SSL *ssl)
 
     cert = SSL_get_peer_certificate(ssl);
     if (cert) {
-	subject = X509_get_subject_name(cert);
-	if (subject) {
-	    out = BIO_new(BIO_s_mem());
-	    if (!out) {
-		fprintf(stderr, "Unable to allocation OpenSSL BIO\n");
-		return;
-	    }
-	    X509_NAME_print(out, subject, 0);
-	    (void)BIO_flush(out);
-	    BIO_get_mem_ptr(out, &bptr);
-	    //fprintf(stdout, "TLS peer subject name: %s\n", bptr->data); 
-	    BIO_free_all(out);
-	}
+        subject = X509_get_subject_name(cert);
+        if (subject) {
+            out = BIO_new(BIO_s_mem());
+            if (!out) {
+                fprintf(stderr, "Unable to allocation OpenSSL BIO\n");
+                return;
+            }
+            X509_NAME_print(out, subject, 0);
+            (void)BIO_flush(out);
+            BIO_get_mem_ptr(out, &bptr);
+            //fprintf(stdout, "TLS peer subject name: %s\n", bptr->data); 
+            BIO_free_all(out);
+        }
     }
-}
+}*/
 
 
 #define TBUF_MAX 1024
 #define READ_CHUNK_SZ 16384
 CURLcode curl_easy_perform(CURL *curl)
 {
-    BIO *conn;
+    //wolfssl converted
+    
     int rv;
     int ssl_err;
     int read_cnt = 0;
     char *rbuf = NULL;
     char tbuf[TBUF_MAX];
-    SSL *ssl = NULL;
-    SSL_CTX *ssl_ctx = NULL;
-    X509_VERIFY_PARAM *vpm = NULL;
+    WOLFSSL *ssl = NULL;
+    WOLFSSL_CTX *ssl_ctx = NULL;
     int cl;
     SessionHandle *ctx = (SessionHandle*)curl;
     struct curl_slist *hdrs;
@@ -665,7 +667,7 @@ CURLcode curl_easy_perform(CURL *curl)
     CURLcode crv;
 
     if (!ctx) {
-	return CURLE_UNKNOWN_OPTION;
+        return CURLE_UNKNOWN_OPTION;
     }
 
     /*
@@ -679,8 +681,8 @@ CURLcode curl_easy_perform(CURL *curl)
         cl = 0;
     }
     if (cl > MURL_POST_MAX) {
-	fprintf(stderr, "POST data exceeds %d byte limit\n", MURL_POST_MAX);
-	return CURLE_FILESIZE_EXCEEDED;
+        fprintf(stderr, "POST data exceeds %d byte limit\n", MURL_POST_MAX);
+        return CURLE_FILESIZE_EXCEEDED;
     }
     rbuf = calloc(1, cl+MURL_HDR_MAX);
     if (!rbuf) {
@@ -692,17 +694,18 @@ CURLcode curl_easy_perform(CURL *curl)
      * Split the URL into it's parts
      */
     crv = parseurl(ctx);
-    if (crv != CURLE_OK) goto easy_perform_cleanup;
-
+    if (crv != CURLE_OK) {
+        goto easy_perform_cleanup;
+    }
     /*
-     * Setup OpenSSL API
+     * Setup WolfSSL API
      */
-    ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+    ssl_ctx = wolfSSL_CTX_new(wolfSSLv23_client_method());
     if (!ssl_ctx) {
         fprintf(stderr, "Failed to create SSL context.\n");
-        ERR_print_errors_fp(stderr);
+        //ERR_print_errors_fp(stderr);
         crv = CURLE_SSL_CONNECT_ERROR;
-	goto easy_perform_cleanup;
+        goto easy_perform_cleanup;
     }
     /*
      * This is optional.
@@ -711,89 +714,91 @@ CURLcode curl_easy_perform(CURL *curl)
      * the error handling required when reading/writing to
      * the SSL socket.
      */
-    SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
+    //Not supported by wolfSSL
+    //SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
 
 
     /*
      * Enable TLS peer verification if requested and CA certs were provided
      */
     if (ctx->ssl_verify_peer && ctx->ca_file) {
-        if (!SSL_CTX_load_verify_locations(ssl_ctx, ctx->ca_file, NULL)) {
+        if (!wolfSSL_CTX_load_verify_locations(ssl_ctx, ctx->ca_file, NULL)) {
             fprintf(stderr, "Failed to set trust anchors.\n");
-            ERR_print_errors_fp(stderr);
+            //ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CACERT_BADFILE;
-	    goto easy_perform_cleanup;
+            goto easy_perform_cleanup;
         }
-        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+        wolfSSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT , NULL);
     }
 
-    vpm = X509_VERIFY_PARAM_new();
-    if (vpm == NULL) {
-        fprintf(stderr, "Unable to allocate a verify parameter structure.\n");
-        ERR_print_errors_fp(stderr);
-        crv = CURLE_SSL_CONNECT_ERROR;
-	goto easy_perform_cleanup;
-    }
 #if 0
     /* TODO: Enable CRL checks */
     X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_CRL_CHECK |
                                 X509_V_FLAG_CRL_CHECK_ALL);
 #endif
-    X509_VERIFY_PARAM_set_depth(vpm, 7);
-    X509_VERIFY_PARAM_set_purpose(vpm, X509_PURPOSE_SSL_SERVER);
+  //TODO put depth back
+    //wolfSSL_CTX_set_verify_depth(ssl_ctx, 7);
+    //X509_VERIFY_PARAM_set_purpose(vpm, X509_PURPOSE_SSL_SERVER);
     if (ctx->ssl_verify_hostname) {
-	X509_VERIFY_PARAM_set1_host(vpm, ctx->host_name, strnlen(ctx->host_name, MURL_HOSTNAME_MAX));
+        char *hostname = malloc(MURL_HOSTNAME_MAX + 1);
+        strncpy(hostname, ctx->host_name, MURL_HOSTNAME_MAX);
+        hostname[MURL_HOSTNAME_MAX] = '\0';
+        wolfSSL_set_tlsext_host_name(ssl, hostname);
+        //X509_VERIFY_PARAM_set1_host(vpm, ctx->host_name, strnlen(ctx->host_name, MURL_HOSTNAME_MAX));
     }
-    SSL_CTX_set1_param(ssl_ctx, vpm);
-    X509_VERIFY_PARAM_free(vpm);
 
     if (ctx->ssl_cert_file && ctx->ssl_key_file) {
-        if (SSL_CTX_use_certificate_chain_file(ssl_ctx, ctx->ssl_cert_file) != 1) {
+        if (wolfSSL_CTX_use_certificate_chain_file(ssl_ctx, ctx->ssl_cert_file) != 1) {
             fprintf(stderr,"Failed to load client certificate\n");
-            ERR_print_errors_fp(stderr);
+            //ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CERTPROBLEM;
-	    goto easy_perform_cleanup;
+            goto easy_perform_cleanup;
         }
-        if (SSL_CTX_use_PrivateKey_file(ssl_ctx, ctx->ssl_key_file, SSL_FILETYPE_PEM) != 1) {
+        if (wolfSSL_CTX_use_PrivateKey_file(ssl_ctx, ctx->ssl_key_file, SSL_FILETYPE_PEM) != 1) {
             fprintf(stderr, "Failed to load client private key\n");
-            ERR_print_errors_fp(stderr);
+            //ERR_print_errors_fp(stderr);
             crv = CURLE_SSL_CERTPROBLEM;
-	    goto easy_perform_cleanup;
+            goto easy_perform_cleanup;
         }
     }
-
-    /*
-     * Open TCP connection with server
-     */
-    if (ctx->use_ipv6) {
-	conn = create_connection_v6(ctx->host_name, ctx->server_port);
-    } else {
-	conn = create_connection(ctx->host_name, ctx->server_port);
-    }
-    //FIXME: do we need to free conn, or is this handled by SSL_free?
-    if (conn == NULL) {
-        fprintf(stderr, "Unable to open socket with server.\n");
-        crv = CURLE_COULDNT_CONNECT;
-	goto easy_perform_cleanup;
-    }
-    ssl = SSL_new(ssl_ctx);
-    if (!SSL_set_tlsext_host_name(ssl, ctx->host_name)) {
+    
+    ssl = wolfSSL_new(ssl_ctx);
+    if (!wolfSSL_set_tlsext_host_name(ssl, ctx->host_name)) {
         fprintf(stderr, "Warning: SNI extension not set.\n");
     }
-    SSL_set_bio(ssl, conn, conn);
-    rv = SSL_connect(ssl);
+    // Resume wolfssl converted
+    
+    SOCKET_T sockfd = 0;
+    
+    tcp_connect(&sockfd, ctx->host_name, ctx->server_port, 0, 0, ssl);
+
+    wolfSSL_set_fd(ssl, sockfd);
+    
+    /*
+     * Enable secure renogotiation (RFC 5746)
+     */
+    if (wolfSSL_UseSecureRenegotiation(ssl) != WOLFSSL_SUCCESS) {
+        fprintf(stderr, "Failed to enable secure renogotiation.\n");
+        //ERR_print_errors_fp(stderr);
+        //TODO: Use correct value
+        crv = CURLE_SSL_CACERT_BADFILE;
+        goto easy_perform_cleanup;
+    }
+    
+    rv = wolfSSL_connect(ssl);
     if (rv <= 0) {
         fprintf(stderr, "TLS handshake failed.\n");
-        ERR_print_errors_fp(stderr);
+        //ERR_print_errors_fp(stderr);
         crv = CURLE_SSL_CONNECT_ERROR;
-	goto easy_perform_cleanup;
+        goto easy_perform_cleanup;
     }
 
     /*
      * PSB requires we log the X509 distinguished name of the peer
      */
     if (ctx->ssl_verify_peer) {
-	murl_log_peer_cert(ssl);
+      //TODO
+        //murl_log_peer_cert(ssl);
     }
 
     /*
@@ -831,9 +836,10 @@ CURLcode curl_easy_perform(CURL *curl)
     /*
      * Send the HTTP request
      */
-    SSL_write(ssl, rbuf, strlen(rbuf));
-    SSL_write(ssl, ctx->post_fields, cl);
+    wolfSSL_write(ssl, rbuf, strlen(rbuf));
+    wolfSSL_write(ssl, ctx->post_fields, cl);
 
+    // ERR_clear_error may need to be converted
     ERR_clear_error();
     free(rbuf);
     rbuf = NULL;
@@ -843,49 +849,52 @@ CURLcode curl_easy_perform(CURL *curl)
      */
     rv = 1;
     while (rv) {
-	/*
-	 * Allocate some space to receive the response from the server
-	 */
-	rbuf = realloc(rbuf, read_cnt + READ_CHUNK_SZ);
-	if (!rbuf) {
-	    fprintf(stderr, "realloc failed (%s).\n", __FUNCTION__);
-	    crv = CURLE_OUT_OF_MEMORY;
-	    goto easy_perform_cleanup;
-	}
-	memset(rbuf+read_cnt, 0x0, READ_CHUNK_SZ);
-	
-	/*
-	 * Read the next chunk from the server
-	 */
-        rv = SSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
-        if (rv <= 0) {
-            ssl_err = SSL_get_error(ssl, rv);
-            switch (ssl_err) {
-            case SSL_ERROR_NONE:
-            case SSL_ERROR_ZERO_RETURN:
-                //fprintf(stderr, "SSL_read finished\n");
-                break;
-            default:
-                ossl_err = ERR_get_error();
-                if ((rv < 0) || ossl_err) {
-                    fprintf(stderr, "SSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
-                            rv, ssl_err, (int)ossl_err);
-                    ERR_print_errors_fp(stderr);
-                    crv = CURLE_USE_SSL_FAILED;
-	            goto easy_perform_cleanup;
-                }
-                break;
-            }
+        /*
+        * Allocate some space to receive the response from the server
+        */
+        rbuf = realloc(rbuf, read_cnt + READ_CHUNK_SZ);
+        if (!rbuf) {
+            fprintf(stderr, "realloc failed (%s).\n", __FUNCTION__);
+            crv = CURLE_OUT_OF_MEMORY;
+            goto easy_perform_cleanup;
         }
-        read_cnt += rv;
-	
-	/*
-	 * Make sure we're not receving too much data from the server.
-	 */
-	if (read_cnt > MURL_RCV_MAX) {
-	    crv = CURLE_FILESIZE_EXCEEDED;
-	    goto easy_perform_cleanup;
-	}
+        memset(rbuf+read_cnt, 0x0, READ_CHUNK_SZ);
+        
+        /*
+        * Read the next chunk from the server
+        */
+        rv = wolfSSL_read(ssl, rbuf+read_cnt, READ_CHUNK_SZ);
+        if (rv <= 0) {
+            ssl_err = wolfSSL_get_error(ssl, rv);
+            switch (ssl_err) {
+                //case SSL_ERROR_NONE:
+                case SSL_ERROR_ZERO_RETURN:
+                    //fprintf(stderr, "wolfSSL_read finished\n");
+                    break;
+                default:
+                    // ERR_get_error may also need to be converted
+                    ossl_err = ERR_get_error();
+                    if ((rv < 0) || ossl_err) {
+                        fprintf(stderr, "wolfSSL_read failed, rv=%d ssl_err=%d ossl_err=%d.\n",
+                                rv, ssl_err, (int)ossl_err);
+                        char x[80];
+                        fprintf(stderr, "wolfSSL_err_string: %s\n", wolfSSL_ERR_error_string(ssl_err, x));
+                        ERR_print_errors_fp(stderr);
+                        crv = CURLE_USE_SSL_FAILED;
+                        goto easy_perform_cleanup;
+                    }
+                    break;
+                }
+            }
+            read_cnt += rv;
+                    
+        /*
+        * Make sure we're not receving too much data from the server.
+        */
+        if (read_cnt > MURL_RCV_MAX) {
+            crv = CURLE_FILESIZE_EXCEEDED;
+            goto easy_perform_cleanup;
+        }
     }
 
     /*
@@ -898,7 +907,7 @@ CURLcode curl_easy_perform(CURL *curl)
      */
     if (murl_http_parse_response(ctx, rbuf)) {
         crv = CURLE_HTTP2;
-	goto easy_perform_cleanup;
+        goto easy_perform_cleanup;
     }
 
     /*
@@ -911,22 +920,26 @@ CURLcode curl_easy_perform(CURL *curl)
     crv = CURLE_OK;
 easy_perform_cleanup:
     if (ssl) {
-	SSL_shutdown(ssl);
-	SSL_free(ssl);
+        wolfSSL_shutdown(ssl);
+        wolfSSL_free(ssl);
     }
-    if (ssl_ctx) SSL_CTX_free(ssl_ctx);
-    if (rbuf) free(rbuf);
+    if (ssl_ctx) {
+        wolfSSL_CTX_free(ssl_ctx);
+    }
+    if (rbuf) {
+        free(rbuf);
+    }
     return crv;
 }
 
 static CURLcode getinfo_long(SessionHandle *data, CURLINFO info, long *param_longp)
 {
     switch (info) {
-    case CURLINFO_RESPONSE_CODE:
-        *param_longp = data->http_status_code;
-        break;
-    default:
-        return CURLE_BAD_FUNCTION_ARGUMENT;
+        case CURLINFO_RESPONSE_CODE:
+            *param_longp = data->http_status_code;
+            break;
+        default:
+            return CURLE_BAD_FUNCTION_ARGUMENT;
     }
 
     return CURLE_OK;
@@ -1090,23 +1103,25 @@ void curl_slist_free_all(struct curl_slist *list)
     } while (next);
 }
 
+
+//TODO
 static void Curl_ossl_cleanup(void)
 {
     /* Free ciphers and digests lists */
-    EVP_cleanup();
+//    EVP_cleanup();
 
     /* Free engine list */
-    ENGINE_cleanup();
+//    ENGINE_cleanup();
 
     /* Free OpenSSL ex_data table */
-    CRYPTO_cleanup_all_ex_data();
+//    CRYPTO_cleanup_all_ex_data();
 
     /* Free OpenSSL error strings */
-    ERR_free_strings();
+//    ERR_free_strings();
 
     /* Free thread local error state, destroying hash upon zero refcount */
-    ERR_remove_thread_state(NULL);
-    ERR_remove_state(0);
+//    ERR_remove_thread_state(NULL);
+//    ERR_remove_state(0);
 }
 
 void curl_easy_cleanup(CURL *curl)
