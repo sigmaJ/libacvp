@@ -1,1 +1,454 @@
 
+
+
+
+TBD                       J. Inkrote, I. McKinnon, S. Rappl, J. Thornton
+Internet-Draft            	             North Carolina State University
+Intended status: Informational                             December 2017
+Expires: June 13, 2018
+
+
+          ACVP Energy Metric Collection JSON Specification
+                       draft-ietf-acvp-subenrg-0.4
+
+Abstract
+
+   This document defines the JSON schema for relaying energy usage
+   data with the ACVP specification.
+
+Status of This Memo
+						
+   This Internet-Draft is not an official Internet-Draft
+   
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on June 13, 2018.
+
+
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+
+
+
+
+
+
+NCSU                     Expires June 13, 2018                  [Page 1]
+
+Internet-Draft                Energy JSON                  December 2017
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   2
+   2.  Capabilities Registration . . . . . . . . . . . . . . . . . .   2
+     2.1.  Energy Usage Data Capabilities Registration   . . . . . .   3
+   3.  Test Vectors  . . . . . . . . . . . . . . . . . . . . . . . .   3
+     3.1.  Test Groups JSON Schema . . . . . . . . . . . . . . . . .   4
+     3.2.  Test Case JSON Schema . . . . . . . . . . . . . . . . . .   4
+     3.3.  Test Vector Responses . . . . . . . . . . . . . . . . . .   5
+	 3.4.  Test Results  . . . . . . . . . . . . . . . . . . . . . .   5
+     3.5.  Acknowledgements  . . . . . . . . . . . . . . . . . . . .   6
+     3.6.  IANA Considerations . . . . . . . . . . . . . . . . . . .   6
+     3.7.  Security Considerations . . . . . . . . . . . . . . . . .   6
+   4.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   6
+     4.1.  Normative References  . . . . . . . . . . . . . . . . . .   7
+   Appendix A.  Example Energy Usage Data Capabilities JSON Object .   7
+   Appendix B.  Example Test Vectors JSON Object . . . . . . . . . .   7
+   Appendix C.  Example Test Results JSON Object . . . . . . . . . .   8
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   8
+
+1.  Introduction
+
+   The Automated Crypto Validation Protocol (ACVP) defines a mechanism
+   to automatically verify the cryptographic implementation of a
+   software or hardware crypto module.  The ACVP specification defines
+   how a crypto module communicates with an ACVP server, including
+   crypto capabilities negotiation, session management, authentication,
+   vector processing and more.  The ACVP specification does not define
+   algorithm specific JSON constructs for performing the crypto
+   validation.  A series of ACVP sub-specifications define the
+   constructs for testing individual crypto algorithms.  Each sub-
+   specification addresses a specific class of crypto algorithms.  This
+   sub-specification defines the JSON constructs for collecting energy
+   usage data from ACVP clients using ACVP.
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted in RFC 2119 [RFC2119].
+
+2.  Capabilities Registration
+
+   ACVP requires crypto modules to register their capabilities.  This
+   allows the crypto module to advertise support for specific
+   algorithms, notifying the ACVP server which algorithms need test
+   vectors generated for the validation process.  This section describes
+   the constructs for advertising support of energy data collection to 
+   the ACVP server.
+
+   
+NCSU                     Expires June 13, 2018                  [Page 2]
+
+Internet-Draft                Energy JSON                  December 2017
+
+
+   The algorithm capabilities are advertised as JSON objects within the
+   'algorithms' value of the ACVP registration message.  The
+   'algorithms' value is an array, where each array element is an
+   individual JSON object defined in this section.  The 'algorithms'
+   value is part of the 'capability_exchange' element of the ACVP JSON
+   registration message.  See the ACVP specification for details on the
+   registration message.  Each algorithm capability advertised is a
+   self-contained JSON object.  The following JSON values are used for
+   energy usage data capabilities:
+
+2.1.  Energy Usage Data Capabilities Registration
+
+   +-----------+------------------------+-------+-----------+----------+
+   | JSON      | Description            | JSON  | Valid     | Optional |
+   | Value     |                        | type  | Values    |          |
+   +-----------+------------------------+-------+-----------+----------+
+   | algorithm | Declare capability to  | value | energy    | No       |
+   |           | collect energy data    |       |           |          |
+   +-----------+------------------------+-------+-----------+----------+
+
+             Table 1: Energy Usage Data Capabilities JSON Values
+
+3.  Test Vectors
+
+   The ACVP server provides test vectors to the ACVP client, which are
+   then processed and returned to the ACVP server for validation.  A
+   typical ACVP validation session would require multiple test vector
+   sets to be downloaded and processed by the ACVP client.  Each test
+   vector set represents an individual crypto algorithm, such as SHA-1,
+   SHA-224, SHA-256, etc.  This section describes the JSON schema for a
+   test vector set used for energy data collection.
+
+   The test vector set JSON schema is a multi-level hierarchy that
+   contains meta data for the entire vector set as well as individual
+   test vectors to be processed by the ACVP client.  The following table
+   describes the JSON elements at the top level of the hierarchy.
+
+   +------------+----------------------------------------------+-------+
+   | JSON Value | Description                                  | JSON  |
+   |            |                                              | type  |
+   +------------+----------------------------------------------+-------+
+   | acvVersion | Protocol version identifier                  | value |
+   | vsId       | Unique numeric identifier for the vector set | value |
+   | algorithm  | Energy.                                      | value |
+   | testGroups | Array of test group JSON objects, which are  | array |
+   |            | defined in Section 3.1                       |       |
+   +------------+----------------------------------------------+-------+
+
+                      Table 2: Vector Set JSON Object
+
+				
+				
+NCSU                     Expires June 13, 2018                  [Page 3]
+
+Internet-Draft                Energy JSON                  December 2017
+
+3.1.  Test Groups JSON Schema
+
+   The testGroups element at the top level in the test vector JSON
+   object is an array of test groups.  Test vectors are grouped into
+   similar test cases to reduce the amount of data transmitted in the
+   vector set.  The Test Group JSON object contains meta data that
+   applies to all test vectors within the group.  The following table
+   describes the energy usage meta data JSON elements of the Test Group 
+   JSON object.
+
+   +----------+-------------------------------+-------+----------------+
+   | JSON     | Description                   | JSON  | Optional       |
+   | Value    |                               | type  |                |
+   +----------+-------------------------------+-------+----------------+
+   | iters    | Number of times each          | value | No             |
+   |          | algorithm in the test should  |       |                |
+   |          | be run.                       |       |                |
+   | freq     | Number of iterations between  | value | No             |
+   |          | each point energy data should |       |                |
+   |          | be collected.                 |       |                |
+   +----------+-------------------------------+-------+----------------+
+
+                      Table 3: Test Group JSON Object
+
+3.2.  Test Case JSON Schema
+
+   Each test group contains an array of one or more test cases.  Each
+   test case is a JSON object that represents a single test vector to be
+   processed by the ACVP client.  The ACVP server shall send the client
+   a single test vector for each registered capability other than energy
+   data collection. For example, if the client registers AES, RSA, and
+   energy data collection capabilities, the server should send the client
+   a test vector for AES and a test vector for RSA. The client should then
+   run each of those tests iters (see section 3.1) number of times and
+   collect power draw and memory usage every freq (see section 3.1) 
+   iterations. The following table represents the data that should be 
+   given for each test case.
+
+
+   
+   
+   
+   
+   
+   
+
+   
+   
+   
+   
+   
+   
+   
+NCSU                     Expires June 13, 2018                  [Page 4]
+
+Internet-Draft                Energy JSON                  December 2017
+
+
+   +--------+---------------------------------------+-------+----------+
+   | JSON   | Description                           | JSON  | Optional |
+   | Value  |                                       | type  |          |
+   +--------+---------------------------------------+-------+----------+
+   | tcId   | Numeric identifier for the test case, | value | No       |
+   |        | unique across the entire vector set.  |       |          |
+   | len    | Length of the message or seed         | value | No       |
+   | msg    | Value of the message or seed in big-  | value | No       |
+   |        | endian hex                            |       |          |
+   | alg    | Algorithm to be used to encrypt or    | value | No       |
+   |        | hash this message                     |       |          | 
+   +--------+---------------------------------------+-------+----------+
+
+                      Table 4: Test Case JSON Object
+					  
+3.3.  Test Vector Responses
+
+   After the ACVP client downloads and processes a vector set, it must
+   send the response vectors back to the ACVP server.  The following
+   table describes the JSON object that represents a vector set
+   response.
+
+   +--------------+--------------------------------------------+-------+
+   | JSON Value   | Description                                | JSON  |
+   |              |                                            | type  |
+   +--------------+--------------------------------------------+-------+
+   | acvVersion   | Protocol version identifier                | value |
+   | vsId         | Unique numeric identifier for the vector   | value |
+   |              | set                                        |       |
+   | testResults  | Array of JSON objects that represent each  | array |
+   |              | test vector result, which uses the         |       |
+   |              | JSON schema as defined in Section 3.4      |       |
+   +--------------+--------------------------------------------+-------+
+
+                 Table 5: Vector Set Response JSON Object
+
+3.4.  Test Results
+
+	The following table describes the JSON object that represents energy
+	usage data to be relayed to an ACVP server.
+	
+	
+	
+
+
+	
+	
+	
+	
+	
+	
+	
+NCSU                     Expires June 13, 2018                  [Page 5]
+
+Internet-Draft                Energy JSON                  December 2017
+	
+	
+   +--------------+----------------------------+-------+----------+
+   | JSON Value   | Description                | JSON  | Optional |
+   |              |                            | type  |          |
+   +--------------+----------------------------+-------+----------+
+   | tcId         | The id of the test         | value | No       |
+   | power        | The average power draw, P, | value | No       |
+   |              | of the process in watts    |       |          |
+   |              | during crypto execution.   |       |          |
+   |              | This should not be the     |       |          |
+   |              | power draw of the device   |       |          |
+   |              | nor should it include      |       |          |
+   |              | system noise power draw.   |       |          |
+   | timestamps   | An array of timestamps that| array | No       |
+   |              | data was collected during  |       |          |
+   |              | execution of the crypto.   |       |          |
+   | memory       | Total memory used by the   | value | No       |
+   |              | program.                   |       |          |
+   | preTime      | An array of timestamps that| array | Yes      |
+   |              | data was collected before  |       |          |
+   |              | execution of the crypto.   |       |          |
+   |              | This is idle data that can |       |          |
+   |              | be used to isolate power   |       |          |
+   |              | consumption of the process.|       |          |
+   | preMem       | An array of memory usage at| array | Yes      |
+   |              | each pre-crypto timestamp  |       |          |
+   | prePow       | An array of power draw at  | array | Yes      |
+   |              | each pre-crypto timestamp  |       |          |
+   | durMem       | An array of memory usage at| array | Yes      |
+   |              | during-crypto timestamps   |       |          |
+   | durPow       | An array of power draw of  | array | Yes      |
+   |              | the device at each         |       |          |
+   |              | during-crypto timestamp    |       |          |
+   +--------------+----------------------------+-------+----------+
+   
+				Table 6: Test Results JSON Object
+
+3.5.  Acknowledgements
+
+   TBD...
+
+3.6.  IANA Considerations
+
+   This memo includes no request to IANA.
+
+3.7.  Security Considerations
+
+   Security considerations are addressed by the ACVP specification.
+
+4.  References
+
+
+
+NCSU                     Expires June 13, 2018                  [Page 6]
+
+Internet-Draft                Energy JSON                  December 2017
+
+4.1.  Normative References
+
+   [ACVP]     authSurName, authInitials., "ACVP Specification", 2016.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <http://www.rfc-editor.org/info/rfc2119>.
+
+
+Appendix A.  Example Energy Usage Data Capabilities JSON Object
+
+   The following is a example JSON object advertising support for 
+   energy usage data.
+
+
+   {
+           "algorithm": "energy"
+   }
+
+
+Appendix B.  Example Test Vectors JSON Object
+
+   The following is an example JSON object for energy data test vectors
+   sent from the ACVP server to the crypto module.
+
+
+      [
+         { "acvVersion": "0.4" },
+         { "vsId": 1564,
+           "algorithm": "energy",
+           "testGroups": [
+           {
+                   "iters": 10000000,
+				   "freq": 1000000,
+                   "tests": [
+                   {
+                           "tcId": 0,
+                           "len": 0,
+                           "msg": "00",
+						   "alg": "AES-128"
+                   },
+                   {
+                           "tcId": 1,
+                           "len": 1,
+                           "msg": "80",
+						   "alg": "SHA-256"
+                   }]
+           }]
+        }]
+
+		
+		
+NCSU                     Expires June 13, 2018                  [Page 7]
+
+Internet-Draft                Energy JSON                  December 2017
+
+Appendix C.  Example Test Results JSON Object
+
+   The following is a example JSON object for energy data test results
+   sent from the crypto module to the ACVP server.
+
+[
+  { "acvVersion": "0.4" },
+  { "vsId": 1564,
+    "testResults": [
+    {
+        "tcId": 0,
+        "power": 3.2225,
+		"timestamps": [1513116849, 1513116871, 1513116887, 1513116896, 1513116909, 1513116929, 1513116958, 1513116969, 1513116977, 1513116993],
+		"memory": 244000,
+		"preTime": [1513116350, 1513116400, 1513116450, 1513116500, 1513116550, 1513116600, 1513116650, 1513116700, 1513116750, 1513116800],
+		"preMem": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		"prePow": [6.7134, 6.7211, 6.6981, 6.6975, 6.6888, 6.6903, 6.6921, 6.6999, 6.7000, 6.7172],
+		"durMem": [244000, 244000, 244000, 244000, 244000, 244000, 244000, 244000, 244000, 244000],
+		"durPow": [9.9243, 9.9258, 9.9255, 9.9241, 9.9210, 9.9231, 9.9252, 9.9248, 9.9247, 9.9245]
+    },
+    {
+        "tcId": 1,
+        "power": 2.1451,
+		"timestamps": [1513117849, 1513117871, 1513117887, 1513117896, 1513117909, 1513117929, 1513117958, 1513117969, 1513117977, 1513117993],
+		"memory": 244000,
+		"preTime": [1513117350, 1513117400, 1513117450, 1513117500, 1513117550, 1513117600, 1513117650, 1513117700, 1513117750, 1513117800],
+		"preMem": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		"prePow": [6.7134, 6.7211, 6.6981, 6.6975, 6.6888, 6.6903, 6.6921, 6.6999, 6.7000, 6.7172],
+		"durMem": [244000, 244000, 244000, 244000, 244000, 244000, 244000, 244000, 244000, 244000],
+		"durPow": [8.8469, 8.8469, 8.8469, 8.8469, 8.8469, 8.8469, 8.8469, 8.8469, 8.8469, 8.8469]
+     }]
+  }]
+
+Author's Address
+
+   Sam Rappl (editor)
+   4308 Theys Rd 
+   Raleigh, NC  27606
+   USA
+
+   Email: sjrappl@ncsu.edu
+
+
+
+
+
+
+
+
+
+
+
+
+NCSU                     Expires June 13, 2018                  [Page 8]
