@@ -1,20 +1,43 @@
-LDFLAGS+=-L/usr/lib/openssl-1.0
-INCDIRS+=-I. -Isrc -I/usr/include/openssl-1.0
+CC = gcc
+CFLAGS+=-g -DUSE_MURL -O0 -fPIC -Wall
+LDFLAGS+=-Lmurl
+INCDIRS+=-I. -Isrc
 
-all: upower_o_aes w_aes upower_w_aes
+SOURCES=src/acvp.c src/acvp_aes.c src/acvp_des.c src/acvp_hash.c src/acvp_drbg.c src/acvp_transport.c src/acvp_util.c src/parson.c src/acvp_hmac.c src/acvp_cmac.c src/acvp_rsa.c src/acvp_dsa.c src/acvp_kdf135_tls.c src/acvp_kdf135_snmp.c src/acvp_kdf135_ssh.c
+OBJECTS=$(SOURCES:.c=.o)
 
-upower_o_aes: upower_o_aes.o
-	gcc -Wall -g $(INCDIRS) -o upower_o_aes upower_o_aes.c $(LDFLAGS) -lssl -lcrypto -lwolfssl
+all: libacvp.a acvp_app wolf_app
 
-upower_w_aes: upower_w_aes.o
-	gcc -Wall -g $(INCDIRS) -o upower_w_aes upower_w_aes.c $(LDFLAGS) -lssl -lcrypto -lwolfssl
+.PHONY: test testcpp
 
-w_aes: w_aes.o
-	gcc -Wall -g $(INCDIRS) -o w_aes w_aes.c $(LDFLAGS) -lssl -lcrypto -lwolfssl
+libacvp.a: $(OBJECTS)
+	ar rcs libacvp.a $(OBJECTS)
 
-o_aes: o_aes.o
-	gcc -Wall -g $(INCDIRS) -o o_aes o_aes.c $(LDFLAGS) -lssl -lcrypto
+.c.o:
+	$(CC) $(INCDIRS) $(CFLAGS) -c $< -o $@
+
+libacvp.so: $(OBJECTS)
+	$(CC) $(INCDIRS) $(CFLAGS) -shared -Wl,-soname,libacvp.so.1.0.0 -o libacvp.so.1.0.0 $(OBJECTS)
+	ln -fs libacvp.so.1.0.0 libacvp.so
+
+acvp_app: app/app_main.c libacvp.a
+	$(CC) $(INCDIRS) $(CFLAGS) -o $@ app/app_main.c -L. $(LDFLAGS) -lacvp -lcrypto -lssl -lmurl -ldl
+
+wolf_app: app/app_main_wolf.c libacvp.a
+	$(CC) $(INCDIRS) $(CFLAGS) -o $@ app/app_main_wolf.c app/app_func_wolf.c -L. $(LDFLAGS) -lacvp -lcrypto -lmurl -ldl -lwolfssl
+
+tests: wolf_app_unit_tests
+
+wolf_app_unit_tests: app/tests/wolf_app/wolf_app_tests.c app/tests/wolf_app/wolf_app_tests_sha.c app/tests/wolf_app/wolf_app_tests_main.c libacvp.a 
+	$(CC) -Wl,--wrap=acvp_create_test_session,--wrap=acvp_set_server,--wrap=acvp_set_vendor_info,--wrap=acvp_set_module_info,--wrap=acvp_set_path_segment,--wrap=acvp_set_cacerts,--wrap=acvp_set_certkey,--wrap=acvp_enable_hash_cap,--wrap=acvp_register,--wrap=acvp_process_tests,--wrap=acvp_check_test_results,--wrap=acvp_free_test_session,--wrap=acvp_cleanup $(INCDIRS) $(CFLAGS) -o $@ app/tests/wolf_app/wolf_app_tests_main.c app/tests/wolf_app/wolf_app_tests_sha.c app/tests/wolf_app/wolf_app_tests.c app/app_func_wolf.c -L. $(LDFLAGS) -lacvp -lcrypto -lssl -lmurl -ldl -lwolfssl -lcmocka 
 
 clean:
-	rm o_aes
-	rm w_aes
+	rm -f *.[ao]
+	rm -f src/*.[ao]
+	rm -f app/*.[ao]
+	rm -f libacvp.so.1.0.0
+	rm -f acvp_app
+	rm -f wolf_app
+	rm -f wolf_app_unit_tests
+	rm -f testgcm
+
