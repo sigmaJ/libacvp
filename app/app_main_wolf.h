@@ -13,10 +13,8 @@
 #include <curl/curl.h>
 #endif
 #include <wolfssl/wolfcrypt/sha256.h>
-#if 0
 #include <wolfssl/wolfcrypt/sha256.h>
-#include <wolfssl/wolfcrypt/sha512.h>
-#endif
+#include <wolfssl/wolfcrypt/aes.h>
 
 #ifdef ACVP_NO_RUNTIME
 #include "app_lcl.h"
@@ -68,5 +66,6 @@ ACVP_RESULT wolf_acvp_register(ACVP_CTX** ctxp, char* ssl_version, ACVP_LOG_LVL 
 ACVP_RESULT wolf_acvp_run(ACVP_CTX* ctx);
 
 ACVP_RESULT app_sha_handler(ACVP_TEST_CASE *test_case);
+ACVP_RESULT app_aes_handler(ACVP_TEST_CASE *test_case);
 
 #endif
