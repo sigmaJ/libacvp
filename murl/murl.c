@@ -777,7 +777,7 @@ CURLcode curl_easy_perform(CURL *curl)
     /*
      * Enable secure renogotiation (RFC 5746)
      */
-    if (wolfSSL_UseSecureRenegotiation(ssl) != WOLFSSL_SUCCESS) {
+    if (!wolfSSL_UseSecureRenegotiation(ssl)) {
         fprintf(stderr, "Failed to enable secure renogotiation.\n");
         //ERR_print_errors_fp(stderr);
         //TODO: Use correct value
