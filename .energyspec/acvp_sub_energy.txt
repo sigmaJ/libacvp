@@ -126,13 +126,15 @@ Internet-Draft                Energy JSON                  December 2017
 
 2.1.  Energy Usage Data Capabilities Registration
 
-   +-----------+------------------------+-------+-----------+----------+
-   | JSON      | Description            | JSON  | Valid     | Optional |
-   | Value     |                        | type  | Values    |          |
-   +-----------+------------------------+-------+-----------+----------+
-   | algorithm | Declare capability to  | value | energy    | No       |
-   |           | collect energy data    |       |           |          |
-   +-----------+------------------------+-------+-----------+----------+
+   +-----------+------------------------+-------+------------+----------+
+   | JSON      | Description            | JSON  | Valid      | Optional |
+   | Value     |                        | type  | Values     |          |
+   +-----------+------------------------+-------+------------+----------+
+   | algorithm | Declare capability to  | value | Different  | No       |
+   |           | collect energy data    |       | methods of |          |
+   |           |                        |       | collecting |          |
+   |           |                        |       | energy data|          |
+   +-----------+------------------------+-------+------------+----------+
 
              Table 1: Energy Usage Data Capabilities JSON Values
 
@@ -163,8 +165,6 @@ Internet-Draft                Energy JSON                  December 2017
    +------------+----------------------------------------------+-------+
 
                       Table 2: Vector Set JSON Object
-
-				
 				
 NCSU                     Expires June 13, 2018                  [Page 3]
 
@@ -371,7 +371,7 @@ Appendix B.  Example Test Vectors JSON Object
       [
          { "acvVersion": "0.4" },
          { "vsId": 1564,
-           "algorithm": "energy",
+           "algorithm": "power meter energy",
            "testGroups": [
            {
                    "iters": 10000000,
